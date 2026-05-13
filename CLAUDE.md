@@ -13,6 +13,7 @@ TrackMyCareer is a single-user personal job application tracker. No authenticati
 | Backend | Spring Boot 3, Java 21, Maven |
 | ORM | Spring Data JPA + Hibernate |
 | Database | PostgreSQL |
+| Migrations | Flyway |
 | Frontend | React + Vite, TypeScript |
 | Styling | Tailwind CSS v4 |
 | UI Components | shadcn/ui |
@@ -22,19 +23,21 @@ TrackMyCareer is a single-user personal job application tracker. No authenticati
 
 ```
 TrackMyCareer/
-├── backend/          # Spring Boot Maven project
+├── server/           # Spring Boot Maven project
 └── frontend/         # React + Vite + TypeScript app
 ```
 
 ## Backend Commands
 
 ```bash
-cd backend
+cd server
 mvn spring-boot:run          # start dev server (port 8080)
 mvn test                     # run all tests
 mvn test -Dtest=ClassName    # run a single test class
 mvn package                  # build JAR
 ```
+
+Flyway migrations live in `server/src/main/resources/db/migration/` and follow the naming convention `V<version>__<description>.sql` (e.g. `V1__create_company_table.sql`). Flyway runs automatically on startup.
 
 ## Frontend Commands
 
