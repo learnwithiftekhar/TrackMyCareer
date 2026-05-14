@@ -55,14 +55,24 @@ bun run lint                 # lint
 ### Backend
 Standard Spring Boot layered architecture: `Controller → Service → Repository`.
 
-- `controller/` — REST controllers, one per resource (Job, Company, Interview, Note)
+- `controller/` — REST controllers: `JobController`, `CompanyController`, `DashboardController`, `HelloController`
 - `service/` — business logic
-- `repository/` — Spring Data JPA repositories
+- `repository/` — Spring Data JPA repositories; custom JPQL queries for search, status counts, and date-range lookups
 - `model/` — JPA entities
-- `dto/` — request/response DTOs (never expose entities directly)
+- `dto/` — request/response DTOs (never expose entities directly); `DashboardSummaryResponse` aggregates status counts, upcoming deadlines, and upcoming interviews in one call
 - `exception/` — `GlobalExceptionHandler` (`@RestControllerAdvice`) for consistent error responses
 
 CORS is configured to allow requests from `http://localhost:5173` in dev.
+
+#### API Routes
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/dashboard/summary` | Status counts, upcoming deadlines (3 days), upcoming interviews (7 days) |
+| GET | `/api/jobs` | Paginated jobs; query params: `page`, `size`, `search`, `status` |
+| GET | `/api/jobs/counts` | Status counts map |
+| GET/POST | `/api/jobs/{id}` | Get / create / update / delete a job |
+| GET/POST | `/api/companies` | List / create companies |
+| GET/PUT/DELETE | `/api/companies/{id}` | Get / update / delete a company |
 
 ### Error Handling
 All errors return a consistent JSON shape:
@@ -76,11 +86,11 @@ All errors return a consistent JSON shape:
 Services always use `HttpStatus.NOT_FOUND` (404) for missing entities, never `BAD_REQUEST`.
 
 ### Frontend
-- `src/pages/` — top-level route pages (Dashboard, AllJobs)
-- `src/components/` — reusable UI components
-- `src/api/` — all fetch calls to the backend, one file per resource
+- `src/pages/` — one file per route: `Dashboard`, `AllJobs`, `NewApplication`, `JobDetail`, `Companies`, `Interviews`, `NewInterview`
+- `src/components/` — reusable UI components (e.g. `Navbar`)
+- `src/api/` — one file per backend resource (`jobs.ts`, `companies.ts`, `dashboard.ts`); all HTTP calls live here, nowhere else
 
-The frontend calls the backend at `http://localhost:8080/api`.
+Routes are defined in `App.tsx` using React Router v6. The frontend calls the backend at `http://localhost:8080/api`.
 
 ### UI Designs
 Static HTML mockups live in `UI Designs/`. **Always consult the relevant file before building or modifying a page or component** — these are the source of truth for layout, styling, and UX.
@@ -139,6 +149,8 @@ Static HTML mockups live in `UI Designs/`. **Always consult the relevant file be
 
 ## Key Business Rules
 
-- Dashboard "coming soon" deadlines = jobs with a deadline within the next **3 days**
+- Dashboard upcoming deadlines = jobs with `deadline` within the next **3 days** (today inclusive)
+- Dashboard upcoming interviews = interviews with `interview_date` within the next **7 days** (today inclusive)
 - All-jobs page: 10 per page, sorted by deadline (soonest first) by default
-- Search on all-jobs page covers job title and company name only
+- Search on all-jobs page covers job title and company name only (case-insensitive LIKE query in `JobRepository`)
+- `AppliedStatus` is a Java enum stored as a string: `Wishlist`, `Applied`, `Interview`, `Offer`, `Rejected`; status counts always include all five keys even if count is zero (pre-seeded in `DashboardService`)

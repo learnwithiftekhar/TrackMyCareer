@@ -1,5 +1,9 @@
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { getDashboardSummary, type DashboardSummary } from '@/api/dashboard';
+import type { Job } from '@/api/jobs';
 
 const TODAY = new Date();
 const DATE_LABEL = TODAY.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
@@ -15,64 +19,82 @@ const SWATCH_COLOR: Record<SwatchKey, string> = {
   rej:     'bg-rej',
 };
 
-const STATS: { label: string; count: number; delta: string; swatch: SwatchKey }[] = [
-  { label: 'Wishlist',  count: 12, delta: '+3', swatch: 'wish' },
-  { label: 'Applied',   count: 24, delta: '+5', swatch: 'applied' },
-  { label: 'Interview', count: 6,  delta: '+2', swatch: 'intv' },
-  { label: 'Offer',     count: 2,  delta: '+1', swatch: 'offer' },
-  { label: 'Rejected',  count: 8,  delta: '—',  swatch: 'rej' },
+const STATUS_SWATCH: Record<string, SwatchKey> = {
+  Wishlist:  'wish',
+  Applied:   'applied',
+  Interview: 'intv',
+  Offer:     'offer',
+  Rejected:  'rej',
+};
+
+const STAT_CONFIG: { label: string; key: string; swatch: SwatchKey }[] = [
+  { label: 'Wishlist',  key: 'Wishlist',  swatch: 'wish' },
+  { label: 'Applied',   key: 'Applied',   swatch: 'applied' },
+  { label: 'Interview', key: 'Interview', swatch: 'intv' },
+  { label: 'Offer',     key: 'Offer',     swatch: 'offer' },
+  { label: 'Rejected',  key: 'Rejected',  swatch: 'rej' },
 ];
 
-interface AvatarStyle { bg: string; color: string; border?: string; letter: string }
+const AVATAR_PALETTE = [
+  { bg: '#635bff', color: '#fff' },
+  { bg: '#0d0d0d', color: '#fff' },
+  { bg: '#6f3bcc', color: '#fff' },
+  { bg: '#fef2ee', color: '#dc4a26' },
+  { bg: '#eef9f1', color: '#1e7a4a' },
+  { bg: '#f5f3ee', color: '#c96442' },
+  { bg: '#fff7e6', color: '#b88416' },
+];
 
-interface DeadlineRow {
-  avatar: AvatarStyle;
-  jobTitle: string;
-  company: string;
-  status: string;
-  statusSwatch: SwatchKey;
-  when: string;
-  date: string;
+function avatarStyle(companyId: number) {
+  return AVATAR_PALETTE[companyId % AVATAR_PALETTE.length];
 }
 
-interface InterviewRow {
-  avatar: AvatarStyle;
-  roundName: string;
-  jobTitle: string;
-  duration: string;
-  when: string;
-  time: string;
+function parseLocalDate(dateStr: string): Date {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d);
 }
 
-const DEADLINES: DeadlineRow[] = [
-  { avatar: { bg: '#635bff', color: '#fff', letter: 'S' }, jobTitle: 'Senior Software Engineer', company: 'Stripe', status: 'Applied', statusSwatch: 'applied', when: 'Tomorrow', date: 'May 15' },
-  { avatar: { bg: '#0d0d0d', color: '#fff', letter: 'L' }, jobTitle: 'Senior Frontend Engineer', company: 'Linear', status: 'Wishlist', statusSwatch: 'wish', when: 'In 2 days', date: 'May 16' },
-  { avatar: { bg: '#fef2ee', color: '#dc4a26', border: '#fbd9cc', letter: 'F' }, jobTitle: 'Product Designer, Platform', company: 'Figma', status: 'Applied', statusSwatch: 'applied', when: 'In 3 days', date: 'May 17' },
-];
+function formatDate(dateStr: string): string {
+  const d = parseLocalDate(dateStr);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
 
-const INTERVIEWS: InterviewRow[] = [
-  { avatar: { bg: '#635bff', color: '#fff', letter: 'S' }, roundName: 'Technical Round 2 — Stripe', jobTitle: 'Senior Software Engineer', duration: '60 min', when: 'Tomorrow', time: '10:00 AM' },
-  { avatar: { bg: '#0d0d0d', color: '#fff', letter: 'V' }, roundName: 'Phone Screen — Vercel', jobTitle: 'Staff Engineer, Edge', duration: '30 min', when: 'Fri, May 16', time: '2:30 PM' },
-  { avatar: { bg: '#f5f3ee', color: '#c96442', border: '#ece6d8', letter: 'A' }, roundName: 'Final Round — Anthropic', jobTitle: 'Product Engineer', duration: '4 sessions', when: 'Mon, May 18', time: '11:00 AM' },
-  { avatar: { bg: '#fff', color: '#1a1a1a', border: '#e5e5e5', letter: 'N' }, roundName: 'Hiring Manager — Notion', jobTitle: 'Senior Product Designer', duration: '45 min', when: 'Wed, May 20', time: '9:30 AM' },
-];
+function deadlineWhen(deadline: string): string {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const days = Math.round((parseLocalDate(deadline).getTime() - today.getTime()) / 86_400_000);
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Tomorrow';
+  if (days > 1) return `In ${days} days`;
+  return `${Math.abs(days)}d overdue`;
+}
+
+function interviewWhen(interviewDate: string): string {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const days = Math.round((parseLocalDate(interviewDate).getTime() - today.getTime()) / 86_400_000);
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Tomorrow';
+  const d = parseLocalDate(interviewDate);
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+}
 
 function pad(n: number) {
   return n < 10 ? `0${n}` : `${n}`;
 }
 
-function CompanyAvatar({ av }: { av: AvatarStyle }) {
+function CompanyAvatar({ companyId, companyName }: { companyId: number; companyName: string }) {
+  const { bg, color } = avatarStyle(companyId);
   return (
     <div
       className="grid size-[38px] shrink-0 place-items-center rounded-[9px] border text-[14px] font-semibold tracking-[-0.01em]"
-      style={{ background: av.bg, color: av.color, borderColor: av.border ?? av.bg }}
+      style={{ background: bg, color, borderColor: bg }}
     >
-      {av.letter}
+      {companyName.charAt(0).toUpperCase()}
     </div>
   );
 }
 
-function StatusBadge({ status, swatch }: { status: string; swatch: SwatchKey }) {
+function StatusBadge({ status }: { status: string }) {
+  const swatch = STATUS_SWATCH[status] ?? 'applied';
   return (
     <span className="inline-flex items-center gap-[5px] rounded-full border border-border bg-secondary px-2 py-px text-[11.5px] font-medium text-secondary-foreground">
       <span className={cn('size-[5px] shrink-0 rounded-full', SWATCH_COLOR[swatch])} />
@@ -81,7 +103,30 @@ function StatusBadge({ status, swatch }: { status: string; swatch: SwatchKey }) 
   );
 }
 
+function StatCardSkeleton() {
+  return (
+    <div className="rounded-[14px] border border-border bg-card p-[20px_22px_22px]">
+      <div className="mb-4 h-3 w-20 animate-pulse rounded bg-secondary" />
+      <div className="h-9 w-12 animate-pulse rounded bg-secondary" />
+      <div className="mt-2.5 h-3 w-24 animate-pulse rounded bg-secondary" />
+    </div>
+  );
+}
+
 export default function Dashboard() {
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getDashboardSummary()
+      .then(setSummary)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const totalApps = summary
+    ? Object.values(summary.statusCounts).reduce((a, b) => a + b, 0)
+    : 0;
+
   return (
     <main className="mx-auto max-w-[1180px] px-8 py-[44px] pb-20">
 
@@ -94,9 +139,9 @@ export default function Dashboard() {
           <p className="flex items-center gap-0 text-[14px] text-muted-foreground">
             {DATE_LABEL}
             <span className="mx-2 inline-block size-[3px] rounded-full bg-muted-foreground/40" />
-            52 active applications
+            {loading ? '—' : totalApps} active applications
             <span className="mx-2 inline-block size-[3px] rounded-full bg-muted-foreground/40" />
-            3 deadlines this week
+            {loading ? '—' : summary?.upcomingDeadlines.length ?? 0} deadlines this week
           </p>
         </div>
         <Button variant="outline" className="gap-[7px] rounded-[9px] px-[14px] text-[13.5px]">
@@ -110,23 +155,26 @@ export default function Dashboard() {
 
       {/* Stats row */}
       <section className="mb-10 grid grid-cols-5 gap-3">
-        {STATS.map((s) => (
-          <div
-            key={s.label}
-            className="rounded-[14px] border border-border bg-card p-[20px_22px_22px] shadow-[0_1px_0_rgba(31,29,26,.02),0_1px_2px_rgba(31,29,26,.03)] transition-colors hover:border-[#ddd7c7]"
-          >
-            <div className="mb-4 flex items-center gap-2 text-[12.5px] font-medium tracking-[0.005em] text-secondary-foreground">
-              <span className={cn('size-[7px] shrink-0 rounded-full', SWATCH_COLOR[s.swatch])} />
-              {s.label}
+        {loading
+          ? Array.from({ length: 5 }).map((_, i) => <StatCardSkeleton key={i} />)
+          : STAT_CONFIG.map((s) => (
+            <div
+              key={s.label}
+              className="rounded-[14px] border border-border bg-card p-[20px_22px_22px] shadow-[0_1px_0_rgba(31,29,26,.02),0_1px_2px_rgba(31,29,26,.03)] transition-colors hover:border-[#ddd7c7]"
+            >
+              <div className="mb-4 flex items-center gap-2 text-[12.5px] font-medium tracking-[0.005em] text-secondary-foreground">
+                <span className={cn('size-[7px] shrink-0 rounded-full', SWATCH_COLOR[s.swatch])} />
+                {s.label}
+              </div>
+              <div className="font-mono text-[34px] font-medium leading-none tracking-[-0.03em] text-foreground">
+                {pad(summary?.statusCounts[s.key] ?? 0)}
+              </div>
+              <div className="mt-2.5 text-[12px] text-muted-foreground">
+                applications
+              </div>
             </div>
-            <div className="font-mono text-[34px] font-medium leading-none tracking-[-0.03em] text-foreground">
-              {pad(s.count)}
-            </div>
-            <div className="mt-2.5 text-[12px] text-muted-foreground">
-              <strong className="font-medium text-secondary-foreground">{s.delta}</strong> this week
-            </div>
-          </div>
-        ))}
+          ))
+        }
       </section>
 
       {/* Two-column grid */}
@@ -145,36 +193,59 @@ export default function Dashboard() {
               </h2>
               <p className="mt-1 text-[12.5px] text-muted-foreground">Closing in the next 3 days</p>
             </div>
-            <a href="#" className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12.5px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
+            <Link to="/jobs" className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12.5px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
               View all →
-            </a>
+            </Link>
           </header>
 
           <div className="px-2 pb-3">
-            {DEADLINES.map((d, i) => (
-              <div
-                key={i}
-                className="grid grid-cols-[44px_1fr_auto] items-center gap-3.5 rounded-[10px] px-3.5 py-3.5 transition-colors hover:bg-secondary [&:not(:first-child)]:border-t [&:not(:first-child)]:border-border"
-              >
-                <CompanyAvatar av={d.avatar} />
-                <div className="min-w-0">
-                  <div className="truncate text-[14px] font-medium leading-snug text-foreground">{d.jobTitle}</div>
-                  <div className="mt-0.5 flex items-center gap-2 text-[12.5px] text-muted-foreground">
-                    {d.company}
-                    <span className="text-muted-foreground/40">·</span>
-                    <StatusBadge status={d.status} swatch={d.statusSwatch} />
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="grid grid-cols-[44px_1fr_auto] items-center gap-3.5 rounded-[10px] px-3.5 py-3.5">
+                  <div className="size-[38px] animate-pulse rounded-[9px] bg-secondary" />
+                  <div className="space-y-2">
+                    <div className="h-3.5 w-3/4 animate-pulse rounded bg-secondary" />
+                    <div className="h-3 w-1/2 animate-pulse rounded bg-secondary" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="h-3 w-16 animate-pulse rounded bg-secondary" />
+                    <div className="h-3 w-10 animate-pulse rounded bg-secondary" />
                   </div>
                 </div>
-                <div className="flex shrink-0 flex-col items-end gap-1">
-                  <span className="font-mono text-[12.5px] tracking-[-0.01em] text-secondary-foreground">{d.when}</span>
-                  <span className="text-[11.5px] text-muted-foreground">{d.date}</span>
-                </div>
-              </div>
-            ))}
+              ))
+            ) : summary?.upcomingDeadlines.length === 0 ? (
+              <p className="px-4 py-6 text-center text-[13px] text-muted-foreground">No deadlines in the next 3 days.</p>
+            ) : (
+              (summary?.upcomingDeadlines ?? []).map((job: Job) => (
+                <Link
+                  key={job.id}
+                  to={`/jobs/${job.id}`}
+                  className="grid grid-cols-[44px_1fr_auto] items-center gap-3.5 rounded-[10px] px-3.5 py-3.5 no-underline transition-colors hover:bg-secondary [&:not(:first-child)]:border-t [&:not(:first-child)]:border-border"
+                >
+                  <CompanyAvatar companyId={job.companyId} companyName={job.companyName} />
+                  <div className="min-w-0">
+                    <div className="truncate text-[14px] font-medium leading-snug text-foreground">{job.jobTitle}</div>
+                    <div className="mt-0.5 flex items-center gap-2 text-[12.5px] text-muted-foreground">
+                      {job.companyName}
+                      <span className="text-muted-foreground/40">·</span>
+                      <StatusBadge status={job.appliedStatus} />
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <span className="font-mono text-[12.5px] tracking-[-0.01em] text-secondary-foreground">
+                      {job.deadline ? deadlineWhen(job.deadline) : '—'}
+                    </span>
+                    <span className="text-[11.5px] text-muted-foreground">
+                      {job.deadline ? formatDate(job.deadline) : ''}
+                    </span>
+                  </div>
+                </Link>
+              ))
+            )}
           </div>
 
           <footer className="flex items-center justify-between border-t border-border px-[22px] py-3 text-[12px] text-muted-foreground">
-            <span>Showing {DEADLINES.length} of {DEADLINES.length}</span>
+            <span>Showing {summary?.upcomingDeadlines.length ?? 0} of {summary?.upcomingDeadlines.length ?? 0}</span>
             <span>Sorted by deadline</span>
           </footer>
         </article>
@@ -192,36 +263,57 @@ export default function Dashboard() {
               </h2>
               <p className="mt-1 text-[12.5px] text-muted-foreground">Next 7 days</p>
             </div>
-            <a href="#" className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12.5px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
+            <Link to="/interviews" className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12.5px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
               View all →
-            </a>
+            </Link>
           </header>
 
           <div className="px-2 pb-3">
-            {INTERVIEWS.map((iv, i) => (
-              <div
-                key={i}
-                className="grid grid-cols-[44px_1fr_auto] items-center gap-3.5 rounded-[10px] px-3.5 py-3.5 transition-colors hover:bg-secondary [&:not(:first-child)]:border-t [&:not(:first-child)]:border-border"
-              >
-                <CompanyAvatar av={iv.avatar} />
-                <div className="min-w-0">
-                  <div className="truncate text-[14px] font-medium leading-snug text-foreground">{iv.roundName}</div>
-                  <div className="mt-0.5 flex items-center gap-2 text-[12.5px] text-muted-foreground">
-                    {iv.jobTitle}
-                    <span className="text-muted-foreground/40">·</span>
-                    {iv.duration}
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="grid grid-cols-[44px_1fr_auto] items-center gap-3.5 rounded-[10px] px-3.5 py-3.5">
+                  <div className="size-[38px] animate-pulse rounded-[9px] bg-secondary" />
+                  <div className="space-y-2">
+                    <div className="h-3.5 w-3/4 animate-pulse rounded bg-secondary" />
+                    <div className="h-3 w-1/2 animate-pulse rounded bg-secondary" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="h-3 w-16 animate-pulse rounded bg-secondary" />
+                    <div className="h-3 w-10 animate-pulse rounded bg-secondary" />
                   </div>
                 </div>
-                <div className="flex shrink-0 flex-col items-end gap-1">
-                  <span className="font-mono text-[12.5px] tracking-[-0.01em] text-secondary-foreground">{iv.when}</span>
-                  <span className="text-[11.5px] text-muted-foreground">{iv.time}</span>
-                </div>
-              </div>
-            ))}
+              ))
+            ) : summary?.upcomingInterviews.length === 0 ? (
+              <p className="px-4 py-6 text-center text-[13px] text-muted-foreground">No interviews in the next 7 days.</p>
+            ) : (
+              (summary?.upcomingInterviews ?? []).map((iv) => (
+                <Link
+                  key={iv.id}
+                  to={`/jobs/${iv.jobId}`}
+                  className="grid grid-cols-[44px_1fr_auto] items-center gap-3.5 rounded-[10px] px-3.5 py-3.5 no-underline transition-colors hover:bg-secondary [&:not(:first-child)]:border-t [&:not(:first-child)]:border-border"
+                >
+                  <CompanyAvatar companyId={iv.companyId} companyName={iv.companyName} />
+                  <div className="min-w-0">
+                    <div className="truncate text-[14px] font-medium leading-snug text-foreground">
+                      {iv.roundName} — {iv.companyName}
+                    </div>
+                    <div className="mt-0.5 truncate text-[12.5px] text-muted-foreground">{iv.jobTitle}</div>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <span className="font-mono text-[12.5px] tracking-[-0.01em] text-secondary-foreground">
+                      {iv.interviewDate ? interviewWhen(iv.interviewDate) : '—'}
+                    </span>
+                    <span className="text-[11.5px] text-muted-foreground">
+                      {iv.interviewDate ? formatDate(iv.interviewDate) : ''}
+                    </span>
+                  </div>
+                </Link>
+              ))
+            )}
           </div>
 
           <footer className="flex items-center justify-between border-t border-border px-[22px] py-3 text-[12px] text-muted-foreground">
-            <span>Showing {INTERVIEWS.length} of 6</span>
+            <span>Showing {summary?.upcomingInterviews.length ?? 0}</span>
             <span>Sorted by date</span>
           </footer>
         </article>
@@ -251,12 +343,14 @@ export default function Dashboard() {
             </svg>
             Paste URL
           </Button>
-          <Button className="gap-[7px] rounded-[9px] px-[14px] text-[13.5px]">
-            <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
-              <path d="M8 3v10M3 8h10" />
-            </svg>
-            New application
-          </Button>
+          <Link to="/jobs/new">
+            <Button className="gap-[7px] rounded-[9px] px-[14px] text-[13.5px]">
+              <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
+                <path d="M8 3v10M3 8h10" />
+              </svg>
+              New application
+            </Button>
+          </Link>
         </div>
       </section>
 

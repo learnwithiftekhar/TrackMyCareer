@@ -8,6 +8,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/jobs")
 public class JobController {
@@ -22,8 +24,14 @@ public class JobController {
     public Page<JobResponse> getJobs(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String search) {
-        return jobService.getJobs(page, size, search);
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status) {
+        return jobService.getJobs(page, size, search, status);
+    }
+
+    @GetMapping("/status/count")
+    public Map<String, Long> getStatusCounts() {
+        return jobService.getStatusCounts();
     }
 
     @GetMapping("/{id}")

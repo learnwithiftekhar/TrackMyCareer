@@ -2,6 +2,7 @@ package com.learnwithiftekhar.server.service;
 
 import com.learnwithiftekhar.server.dto.JobRequest;
 import com.learnwithiftekhar.server.dto.JobResponse;
+import com.learnwithiftekhar.server.model.AppliedStatus;
 import com.learnwithiftekhar.server.model.Company;
 import com.learnwithiftekhar.server.model.Job;
 import com.learnwithiftekhar.server.repository.CompanyRepository;
@@ -13,6 +14,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -27,10 +33,27 @@ public class JobService {
     }
 
     @Transactional(readOnly = true)
-    public Page<JobResponse> getJobs(int page, int size, String search) {
+    public Page<JobResponse> getJobs(int page, int size, String search, String status) {
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "deadline"));
         String searchParam = (search == null || search.isBlank()) ? "%" : "%" + search.trim() + "%";
-        return jobRepository.searchJobs(searchParam, pageable).map(this::toResponse);
+        if (status == null || status.isBlank()) {
+            return jobRepository.searchJobs(searchParam, pageable).map(this::toResponse);
+        }
+        try {
+            AppliedStatus appliedStatus = AppliedStatus.valueOf(status);
+            return jobRepository.searchJobsByStatus(searchParam, appliedStatus, pageable).map(this::toResponse);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status: " + status);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Long> getStatusCounts() {
+        Map<String, Long> counts = Arrays.stream(AppliedStatus.values())
+                .collect(Collectors.toMap(Enum::name, s -> 0L, (a, b) -> a, LinkedHashMap::new));
+        jobRepository.countByStatus()
+                .forEach(row -> counts.put(((AppliedStatus) row[0]).name(), (Long) row[1]));
+        return counts;
     }
 
     @Transactional(readOnly = true)
