@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { getCompanies, type Company } from '@/api/companies';
+import { createJob } from '@/api/jobs';
 
 type Status = 'Wishlist' | 'Applied' | 'Interview' | 'Offer' | 'Rejected';
 
@@ -26,7 +28,8 @@ function avatarBg(letter: string) {
 
 interface FormState {
   jobTitle: string;
-  company: string;
+  companyId: number | null;
+  companySearch: string;
   jobUrl: string;
   status: Status;
   appliedDate: string;
@@ -43,10 +46,11 @@ export default function NewApplication() {
 
   const [form, setForm] = useState<FormState>({
     jobTitle: '',
-    company: '',
+    companyId: null,
+    companySearch: '',
     jobUrl: '',
     status: 'Applied',
-    appliedDate: new Date().toISOString().slice(0, 10),
+    appliedDate: '',
     deadline: '',
     source: '',
     salaryMin: '',
@@ -56,28 +60,79 @@ export default function NewApplication() {
   });
   const [pasteUrl, setPasteUrl] = useState('');
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const companyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    getCompanies().then(setCompanies).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (companyRef.current && !companyRef.current.contains(e.target as Node)) {
+        setCompanyDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
     if (errors[key]) setErrors((e) => ({ ...e, [key]: undefined }));
   }
 
+  const filteredCompanies = form.companySearch
+    ? companies.filter((c) => c.companyName.toLowerCase().includes(form.companySearch.toLowerCase()))
+    : companies;
+
+  function selectCompany(company: Company) {
+    setForm((f) => ({ ...f, companyId: company.id, companySearch: company.companyName }));
+    setErrors((e) => ({ ...e, companyId: undefined }));
+    setCompanyDropdownOpen(false);
+  }
+
   function validate() {
     const e: Partial<Record<keyof FormState, string>> = {};
     if (!form.jobTitle.trim()) e.jobTitle = 'Job title is required';
-    if (!form.company.trim())  e.company  = 'Company is required';
+    if (!form.companyId)       e.companyId = 'Company is required';
     return e;
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     const e = validate();
     if (Object.keys(e).length) { setErrors(e); return; }
-    // TODO: POST to /api/jobs when API layer is ready
-    navigate('/jobs');
+
+    const salaryRange = [form.salaryMin, form.salaryMax].filter(Boolean).join(' - ') || undefined;
+
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const job = await createJob({
+        jobTitle: form.jobTitle.trim(),
+        companyId: form.companyId!,
+        appliedStatus: form.status,
+        jobDescription: form.description || undefined,
+        coverLetter: form.coverLetter || undefined,
+        appliedDate: form.appliedDate || undefined,
+        deadline: form.deadline || undefined,
+        jobUrl: form.jobUrl || undefined,
+        jobSource: form.source || undefined,
+        salaryRange,
+      });
+      navigate(`/jobs/${job.id}`);
+    } catch {
+      setSubmitError('Failed to save application. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
-  const letter = avatarLetter(form.company);
-  const bg     = form.company ? avatarBg(letter) : '#b3afa3';
+  const letter = avatarLetter(form.companySearch);
+  const bg     = form.companySearch ? avatarBg(letter) : '#b3afa3';
 
   return (
     <main className="mx-auto max-w-[880px] px-8 py-7 pb-24">
@@ -149,30 +204,70 @@ export default function NewApplication() {
           </Field>
 
           {/* Company */}
-          <Field label={<>Company <ReqStar /></>} error={errors.company}>
-            <div
-              className={cn(
-                'flex cursor-text items-center gap-2.5 rounded-[8px] border border-transparent px-1 py-1 pr-3 transition-colors',
-                'hover:bg-[#fbfaf6] focus-within:border-indigo focus-within:bg-white focus-within:ring-[3px] focus-within:ring-indigo/10',
-                errors.company && 'border-red-400 ring-[3px] ring-red-400/10',
-              )}
-            >
+          <Field label={<>Company <ReqStar /></>} error={errors.companyId}>
+            <div ref={companyRef} className="relative">
               <div
-                className="grid size-[30px] shrink-0 place-items-center rounded-[8px] text-[13px] font-semibold text-white"
-                style={{ background: bg }}
+                className={cn(
+                  'flex cursor-text items-center gap-2.5 rounded-[8px] border border-transparent px-1 py-1 pr-3 transition-colors',
+                  'hover:bg-[#fbfaf6] focus-within:border-indigo focus-within:bg-white focus-within:ring-[3px] focus-within:ring-indigo/10',
+                  errors.companyId && 'border-red-400 ring-[3px] ring-red-400/10',
+                )}
               >
-                {letter}
+                <div
+                  className="grid size-[30px] shrink-0 place-items-center rounded-[8px] text-[13px] font-semibold text-white"
+                  style={{ background: bg }}
+                >
+                  {letter}
+                </div>
+                <input
+                  type="text"
+                  value={form.companySearch}
+                  onChange={(e) => {
+                    set('companySearch', e.target.value);
+                    setForm((f) => ({ ...f, companyId: null }));
+                    setCompanyDropdownOpen(true);
+                  }}
+                  onFocus={() => setCompanyDropdownOpen(true)}
+                  placeholder="Type a company name…"
+                  className="flex-1 border-none bg-transparent py-2 text-[14px] text-foreground outline-none placeholder:text-muted-foreground/50"
+                />
+                <svg className="size-3.5 shrink-0 text-muted-foreground/60" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 6l4 4 4-4" />
+                </svg>
               </div>
-              <input
-                type="text"
-                value={form.company}
-                onChange={(e) => set('company', e.target.value)}
-                placeholder="Type a company name…"
-                className="flex-1 border-none bg-transparent py-2 text-[14px] text-foreground outline-none placeholder:text-muted-foreground/50"
-              />
-              <svg className="size-3.5 shrink-0 text-muted-foreground/60" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 6l4 4 4-4" />
-              </svg>
+              {companyDropdownOpen && (
+                <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-[10px] border border-border bg-card shadow-[0_4px_16px_-8px_rgba(31,29,26,.18)]">
+                  {filteredCompanies.length === 0 ? (
+                    <div className="px-4 py-3 text-[13px] text-muted-foreground">
+                      No companies found.{' '}
+                      <Link to="/companies" className="text-indigo underline">Add one first</Link>
+                    </div>
+                  ) : (
+                    <ul className="max-h-48 overflow-y-auto py-1">
+                      {filteredCompanies.map((c) => (
+                        <li key={c.id}>
+                          <button
+                            type="button"
+                            onMouseDown={() => selectCompany(c)}
+                            className={cn(
+                              'flex w-full cursor-pointer items-center gap-2.5 px-3 py-2 text-left text-[13.5px] transition-colors hover:bg-background',
+                              form.companyId === c.id && 'text-indigo',
+                            )}
+                          >
+                            <div
+                              className="grid size-[22px] shrink-0 place-items-center rounded-[6px] text-[11px] font-semibold text-white"
+                              style={{ background: avatarBg(avatarLetter(c.companyName)) }}
+                            >
+                              {avatarLetter(c.companyName)}
+                            </div>
+                            {c.companyName}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
             </div>
           </Field>
 
@@ -394,30 +489,32 @@ export default function NewApplication() {
       {/* Sticky footer */}
       <div className="sticky bottom-4 mt-8 flex items-center justify-between gap-3 rounded-[12px] border border-[#ddd7c7] bg-card px-[18px] py-3 shadow-[0_4px_16px_-8px_rgba(31,29,26,.16),0_1px_2px_rgba(31,29,26,.04)]">
         <div className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
-          <span className="size-1.5 rounded-full bg-offer" />
-          Draft saved a moment ago
+          {submitError ? (
+            <span className="text-red-500">{submitError}</span>
+          ) : (
+            <>
+              <span className="size-1.5 rounded-full bg-offer" />
+              Fill in the details above
+            </>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => navigate('/jobs')}
-            className="cursor-pointer rounded-[9px] border border-transparent px-2.5 py-2 text-[13.5px] text-muted-foreground transition-colors hover:bg-background hover:text-secondary-foreground"
+            disabled={submitting}
+            className="cursor-pointer rounded-[9px] border border-transparent px-2.5 py-2 text-[13.5px] text-muted-foreground transition-colors hover:bg-background hover:text-secondary-foreground disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             type="button"
-            className="cursor-pointer rounded-[9px] border border-[#ddd7c7] bg-transparent px-3.5 py-2 text-[13.5px] font-medium text-secondary-foreground transition-colors hover:bg-card hover:text-foreground"
-          >
-            Save as draft
-          </button>
-          <button
-            type="button"
             onClick={handleSubmit}
-            className="inline-flex cursor-pointer items-center gap-2 rounded-[9px] bg-foreground px-3.5 py-2 text-[13.5px] font-medium text-background transition-colors hover:bg-[#2d2a26]"
+            disabled={submitting}
+            className="inline-flex cursor-pointer items-center gap-2 rounded-[9px] bg-foreground px-3.5 py-2 text-[13.5px] font-medium text-background transition-colors hover:bg-[#2d2a26] disabled:opacity-60"
           >
-            Save application
-            <span className="rounded-[4px] bg-white/[0.12] px-[5px] py-px font-mono text-[11px] opacity-70">⌘↵</span>
+            {submitting ? 'Saving…' : 'Save application'}
+            {!submitting && <span className="rounded-[4px] bg-white/[0.12] px-[5px] py-px font-mono text-[11px] opacity-70">⌘↵</span>}
           </button>
         </div>
       </div>

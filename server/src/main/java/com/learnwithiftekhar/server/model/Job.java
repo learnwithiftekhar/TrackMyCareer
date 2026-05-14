@@ -1,7 +1,9 @@
 package com.learnwithiftekhar.server.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,6 +42,10 @@ public class Job {
 
     @Column(name = "salary_range", length = 100)
     private String salaryRange;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "company_id", nullable = false)
@@ -82,6 +88,8 @@ public class Job {
 
     public String getSalaryRange() { return salaryRange; }
     public void setSalaryRange(String salaryRange) { this.salaryRange = salaryRange; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
 
     public Company getCompany() { return company; }
     public void setCompany(Company company) { this.company = company; }

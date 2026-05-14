@@ -1,6 +1,7 @@
 package com.learnwithiftekhar.server.dto;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class JobResponse {
 
@@ -16,6 +17,7 @@ public class JobResponse {
     private String jobUrl;
     private String jobSource;
     private String salaryRange;
+    private LocalDateTime createdAt;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -52,4 +54,7 @@ public class JobResponse {
 
     public String getSalaryRange() { return salaryRange; }
     public void setSalaryRange(String salaryRange) { this.salaryRange = salaryRange; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

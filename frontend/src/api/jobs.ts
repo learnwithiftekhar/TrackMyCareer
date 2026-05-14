@@ -13,6 +13,7 @@ export interface Job {
   jobUrl: string | null;
   jobSource: string | null;
   salaryRange: string | null;
+  createdAt: string;
 }
 
 export interface JobPage {
@@ -30,12 +31,16 @@ export async function getJobs(params: {
   size?: number;
   search?: string;
   status?: string;
+  sortBy?: string;
+  sortDir?: 'asc' | 'desc';
 }): Promise<JobPage> {
   const url = new URL(BASE);
   if (params.page != null) url.searchParams.set('page', String(params.page));
   if (params.size != null) url.searchParams.set('size', String(params.size));
   if (params.search) url.searchParams.set('search', params.search);
   if (params.status) url.searchParams.set('status', params.status);
+  if (params.sortBy) url.searchParams.set('sortBy', params.sortBy);
+  if (params.sortDir) url.searchParams.set('sortDir', params.sortDir);
   const res = await fetch(url.toString());
   if (!res.ok) throw new Error('Failed to fetch jobs');
   return res.json();
@@ -44,5 +49,28 @@ export async function getJobs(params: {
 export async function getStatusCounts(): Promise<StatusCounts> {
   const res = await fetch(`${BASE}/status/count`);
   if (!res.ok) throw new Error('Failed to fetch status counts');
+  return res.json();
+}
+
+export interface JobCreateRequest {
+  jobTitle: string;
+  companyId: number;
+  appliedStatus: string;
+  jobDescription?: string;
+  coverLetter?: string;
+  appliedDate?: string;
+  deadline?: string;
+  jobUrl?: string;
+  jobSource?: string;
+  salaryRange?: string;
+}
+
+export async function createJob(data: JobCreateRequest): Promise<Job> {
+  const res = await fetch(BASE, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to create job');
   return res.json();
 }

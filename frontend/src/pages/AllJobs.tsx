@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 import { getJobs, getStatusCounts, type Job, type StatusCounts } from '@/api/jobs';
 
 type DeadlineUrgency = 'urgent' | 'soon' | 'normal';
+type SortField = 'deadline' | 'createdAt';
+type SortDir = 'asc' | 'desc';
 
 const SWATCH: Record<string, string> = {
   Wishlist:  'bg-wish',
@@ -24,7 +26,7 @@ const FILTERS = [
 ];
 
 const CELL = 'flex min-w-0 items-center px-4 py-[14px]';
-const GRID_COLS = 'minmax(260px,1.4fr) minmax(160px,1fr) 120px 110px 130px 120px 130px 44px';
+const GRID_COLS = 'minmax(260px,1.4fr) minmax(160px,1fr) 120px 110px 130px 120px 130px 110px 44px';
 
 const AVATAR_PALETTE = [
   { bg: '#635bff', color: '#fff' },
@@ -48,6 +50,11 @@ function parseLocalDate(dateStr: string): Date {
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return '—';
   const d = parseLocalDate(dateStr);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function formatCreatedAt(isoStr: string): string {
+  const d = new Date(isoStr);
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
@@ -97,7 +104,7 @@ function SkeletonRows() {
     <>
       {Array.from({ length: 10 }).map((_, i) => (
         <div key={i} className="contents">
-          {Array.from({ length: 8 }).map((_, j) => (
+          {Array.from({ length: 9 }).map((_, j) => (
             <div key={j} className={cn(CELL, 'border-b border-border')}>
               <div className="h-4 w-full animate-pulse rounded bg-secondary" />
             </div>
@@ -118,6 +125,8 @@ export default function AllJobs() {
   const [totalPages, setTotalPages] = useState(0);
   const [statusCounts, setStatusCounts] = useState<StatusCounts>({});
   const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState<SortField>('deadline');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
 
   // Debounce search input
   useEffect(() => {
@@ -133,7 +142,7 @@ export default function AllJobs() {
     getStatusCounts().then(setStatusCounts).catch(() => {});
   }, []);
 
-  // Fetch jobs on page/filter/search change
+  // Fetch jobs on page/filter/search/sort change
   useEffect(() => {
     setLoading(true);
     getJobs({
@@ -141,6 +150,8 @@ export default function AllJobs() {
       size: 10,
       search: debouncedSearch || undefined,
       status: activeFilter === 'All' ? undefined : activeFilter,
+      sortBy,
+      sortDir,
     })
       .then((data) => {
         setJobs(data.content);
@@ -149,12 +160,27 @@ export default function AllJobs() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [page, debouncedSearch, activeFilter]);
+  }, [page, debouncedSearch, activeFilter, sortBy, sortDir]);
 
   function handleFilterChange(filter: string) {
     setActiveFilter(filter);
     setPage(0);
   }
+
+  function handleSort(field: SortField) {
+    if (sortBy === field) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortBy(field);
+      setSortDir(field === 'createdAt' ? 'desc' : 'asc');
+    }
+    setPage(0);
+  }
+
+  const SORT_LABELS: Record<SortField, string> = {
+    deadline: 'Deadline',
+    createdAt: 'Entry Date',
+  };
 
   const totalAll = Object.values(statusCounts).reduce((a, b) => a + b, 0);
 
@@ -184,15 +210,15 @@ export default function AllJobs() {
           </h1>
           <p className="text-[14px] text-muted-foreground">
             <strong className="font-medium text-secondary-foreground">{totalElements}</strong> applications tracked
-            &nbsp;·&nbsp;Sorted by deadline, soonest first
+            &nbsp;·&nbsp;Sorted by {SORT_LABELS[sortBy]}, {sortDir === 'asc' ? 'oldest first' : 'newest first'}
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-[7px] rounded-[9px] px-[14px] text-[13.5px]">
+          <Button variant="outline" onClick={() => handleSort(sortBy)} className="gap-[7px] rounded-[9px] px-[14px] text-[13.5px]">
             <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 4h10M5 8h6M7 12h2" />
             </svg>
-            Sort: Deadline ↑
+            Sort: {SORT_LABELS[sortBy]} {sortDir === 'asc' ? '↑' : '↓'}
           </Button>
           <Button variant="outline" className="gap-[7px] rounded-[9px] px-[14px] text-[13.5px]">
             <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -259,20 +285,34 @@ export default function AllJobs() {
         <div className="grid" style={{ gridTemplateColumns: GRID_COLS }}>
 
           {/* Header */}
-          {['Role', 'Company', 'Status', 'Applied', 'Deadline', 'Source', 'Salary', ''].map((label, i) => (
-            <div key={i} className={cn(CELL, 'border-b border-border bg-secondary text-[11.5px] font-medium uppercase tracking-[0.06em]',
-              label === 'Deadline' ? 'gap-[5px] cursor-pointer text-foreground' : 'text-muted-foreground',
-            )}>
-              {label}
-              {label === 'Deadline' && <span className="font-mono text-[#4f46e5] normal-case tracking-normal">↑</span>}
-            </div>
-          ))}
+          {(['Role', 'Company', 'Status', 'Applied', 'Deadline', 'Source', 'Salary', 'Entry Date', ''] as const).map((label, i) => {
+            const field: SortField | null = label === 'Deadline' ? 'deadline' : label === 'Entry Date' ? 'createdAt' : null;
+            const isActive = field !== null && sortBy === field;
+            return (
+              <div
+                key={i}
+                onClick={field ? () => handleSort(field) : undefined}
+                className={cn(
+                  CELL, 'border-b border-border bg-secondary text-[11.5px] font-medium uppercase tracking-[0.06em]',
+                  field ? 'cursor-pointer select-none gap-[5px] hover:text-foreground' : 'text-muted-foreground',
+                  isActive ? 'text-foreground' : 'text-muted-foreground',
+                )}
+              >
+                {label}
+                {isActive && (
+                  <span className="font-mono text-[#4f46e5] normal-case tracking-normal">
+                    {sortDir === 'asc' ? '↑' : '↓'}
+                  </span>
+                )}
+              </div>
+            );
+          })}
 
           {/* Rows */}
           {loading ? (
             <SkeletonRows />
           ) : jobs.length === 0 ? (
-            <div className="col-span-8 py-16 text-center text-[14px] text-muted-foreground">
+            <div className="col-span-9 py-16 text-center text-[14px] text-muted-foreground">
               No jobs found.
             </div>
           ) : (
@@ -350,6 +390,11 @@ export default function AllJobs() {
                     job.salaryRange ? 'text-secondary-foreground' : 'text-muted-foreground',
                   )}>
                     {job.salaryRange ?? '—'}
+                  </div>
+
+                  {/* Entry Date */}
+                  <div className={cn(CELL, 'border-b border-border font-mono text-[12.5px] tracking-[-0.01em] text-secondary-foreground')}>
+                    {formatCreatedAt(job.createdAt)}
                   </div>
 
                   {/* Actions */}

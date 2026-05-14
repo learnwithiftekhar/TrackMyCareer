@@ -32,9 +32,13 @@ public class JobService {
         this.companyRepository = companyRepository;
     }
 
+    private static final java.util.Set<String> ALLOWED_SORT_FIELDS = java.util.Set.of("deadline", "createdAt");
+
     @Transactional(readOnly = true)
-    public Page<JobResponse> getJobs(int page, int size, String search, String status) {
-        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "deadline"));
+    public Page<JobResponse> getJobs(int page, int size, String search, String status, String sortBy, String sortDir) {
+        String field = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "deadline";
+        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(direction, field));
         String searchParam = (search == null || search.isBlank()) ? "%" : "%" + search.trim() + "%";
         if (status == null || status.isBlank()) {
             return jobRepository.searchJobs(searchParam, pageable).map(this::toResponse);
@@ -119,6 +123,7 @@ public class JobService {
         response.setJobUrl(job.getJobUrl());
         response.setJobSource(job.getJobSource());
         response.setSalaryRange(job.getSalaryRange());
+        response.setCreatedAt(job.getCreatedAt());
         return response;
     }
 }
