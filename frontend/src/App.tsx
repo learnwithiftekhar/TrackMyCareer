@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard';
 import AllJobs from './pages/AllJobs';
 import NewApplication from './pages/NewApplication';
 import JobDetail from './pages/JobDetail';
+import Companies from './pages/Companies';
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
         <Route path="/jobs" element={<AllJobs />} />
         <Route path="/jobs/new" element={<NewApplication />} />
         <Route path="/jobs/:id" element={<JobDetail />} />
+        <Route path="/companies" element={<Companies />} />
       </Routes>
     </BrowserRouter>
   );
