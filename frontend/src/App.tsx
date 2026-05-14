@@ -1,12 +1,11 @@
-import './App.css'
+import Navbar from './components/Navbar';
+import Dashboard from './pages/Dashboard';
 
-function App() {
-
+export default function App() {
   return (
     <>
-      <h1>Welcome to Track My Job</h1>
+      <Navbar />
+      <Dashboard />
     </>
-  )
+  );
 }
-
-export default App

@@ -1,0 +1,89 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ── Warm Notion-style palette mapped to shadcn tokens ── */
+:root {
+  --background:           #f7f5f0;
+  --foreground:           #1f1d1a;
+  --card:                 #ffffff;
+  --card-foreground:      #1f1d1a;
+  --popover:              #ffffff;
+  --popover-foreground:   #1f1d1a;
+  --primary:              #1f1d1a;
+  --primary-foreground:   #f7f5f0;
+  --secondary:            #fbfaf6;
+  --secondary-foreground: #4b4843;
+  --muted:                #fbfaf6;
+  --muted-foreground:     #8c887e;
+  --accent:               #eef0ff;
+  --accent-foreground:    #3730a3;
+  --destructive:          oklch(0.577 0.245 27.325);
+  --border:               #ece8dd;
+  --border-strong:        #ddd7c7;
+  --input:                #ece8dd;
+  --ring:                 #4f46e5;
+  --radius:               0.875rem;
+
+  /* Status swatches */
+  --wish:    #9c8d6d;
+  --applied: #4f46e5;
+  --intv:    #b8854a;
+  --offer:   #2f8a5c;
+  --rej:     #b04a3f;
+
+  /* Indigo accent */
+  --indigo:      #4f46e5;
+  --indigo-soft: #eef0ff;
+}
+
+@theme inline {
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  --color-background:           var(--background);
+  --color-foreground:           var(--foreground);
+  --color-card:                 var(--card);
+  --color-card-foreground:      var(--card-foreground);
+  --color-popover:              var(--popover);
+  --color-popover-foreground:   var(--popover-foreground);
+  --color-primary:              var(--primary);
+  --color-primary-foreground:   var(--primary-foreground);
+  --color-secondary:            var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted:                var(--muted);
+  --color-muted-foreground:     var(--muted-foreground);
+  --color-accent:               var(--accent);
+  --color-accent-foreground:    var(--accent-foreground);
+  --color-destructive:          var(--destructive);
+  --color-border:               var(--border);
+  --color-input:                var(--input);
+  --color-ring:                 var(--ring);
+
+  /* Status colors available as Tailwind utilities */
+  --color-wish:    var(--wish);
+  --color-applied: var(--applied);
+  --color-intv:    var(--intv);
+  --color-offer:   var(--offer);
+  --color-rej:     var(--rej);
+  --color-indigo:  var(--indigo);
+
+  --radius-sm: calc(var(--radius) * 0.714);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) * 1.14);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-size: 14px;
+    line-height: 1.5;
+    text-rendering: optimizeLegibility;
+  }
+}
