@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 const NAV_LINKS = [
@@ -10,6 +10,7 @@ const NAV_LINKS = [
 ];
 
 export default function Navbar() {
+  const navigate = useNavigate();
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-background/85 backdrop-blur-sm backdrop-saturate-[140%]">
       <div className="mx-auto flex max-w-[1180px] items-center gap-9 px-8 py-[14px]">
@@ -74,7 +75,7 @@ export default function Navbar() {
           </Button>
 
           {/* New application */}
-          <Button className="gap-[7px] rounded-[9px] px-[14px] text-[13.5px]">
+          <Button onClick={() => navigate('/jobs/new')} className="gap-[7px] rounded-[9px] px-[14px] text-[13.5px]">
             <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
               <path d="M8 3v10M3 8h10" />
             </svg>
