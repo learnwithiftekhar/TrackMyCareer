@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280" />
+<title>TrackMyJob — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    /* Notion-soft warm palette */
+    --bg:        #f7f5f0;
+    --surface:   #ffffff;
+    --surface-2: #fbfaf6;
+    --border:    #ece8dd;
+    --border-strong: #ddd7c7;
+    --ink:       #1f1d1a;
+    --ink-2:     #4b4843;
+    --muted:     #8c887e;
+    --muted-2:   #b3afa3;
+
+    /* Indigo accent (small, restrained) */
+    --accent:    #4f46e5;
+    --accent-2:  #6366f1;
+    --accent-soft: #eef0ff;
+    --accent-ink:  #3730a3;
+
+    /* Status hues — desaturated, warm-friendly */
+    --wish:    #9c8d6d;   /* dusty gold */
+    --applied: #4f46e5;   /* indigo */
+    --intv:    #b8854a;   /* amber */
+    --offer:   #2f8a5c;   /* green */
+    --rej:     #b04a3f;   /* terracotta */
+
+    --radius:    14px;
+    --radius-sm: 10px;
+    --shadow-soft: 0 1px 0 rgba(31,29,26,.02), 0 1px 2px rgba(31,29,26,.03);
+
+    --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  /* ---------- Top nav ---------- */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(247, 245, 240, 0.85);
+    backdrop-filter: saturate(140%) blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    gap: 36px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+  }
+  .brand-mark {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: var(--ink);
+    color: var(--bg);
+    display: grid;
+    place-items: center;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .nav-link {
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    color: var(--ink-2);
+    text-decoration: none;
+    transition: background .15s ease, color .15s ease;
+  }
+  .nav-link:hover { background: rgba(31,29,26,.04); color: var(--ink); }
+  .nav-link.is-active {
+    color: var(--ink);
+    background: rgba(31,29,26,.05);
+  }
+  .nav-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border-radius: 9px;
+    font-size: 13.5px;
+    font-weight: 500;
+    font-family: inherit;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, transform .05s ease;
+    line-height: 1;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary {
+    background: var(--ink);
+    color: var(--bg);
+  }
+  .btn-primary:hover { background: #2d2a26; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink-2);
+    border-color: var(--border-strong);
+  }
+  .btn-ghost:hover { background: var(--surface); color: var(--ink); }
+  .btn-icon {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    color: var(--ink-2);
+    border-radius: 9px;
+  }
+  .btn-icon:hover { background: var(--surface); color: var(--ink); }
+
+  /* Search */
+  .search {
+    position: relative;
+    width: 240px;
+  }
+  .search input {
+    width: 100%;
+    padding: 8px 12px 8px 32px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 9px;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--ink);
+    outline: none;
+  }
+  .search input::placeholder { color: var(--muted-2); }
+  .search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,.10); }
+  .search svg {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted-2);
+  }
+  .kbd {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 1px 5px;
+  }
+
+  /* ---------- Main shell ---------- */
+  main {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 44px 32px 80px;
+  }
+
+  /* Header */
+  .page-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 36px;
+  }
+  .page-title {
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin: 0 0 4px;
+  }
+  .page-sub {
+    color: var(--muted);
+    font-size: 14px;
+    margin: 0;
+  }
+  .page-sub .dot { display: inline-block; width: 3px; height: 3px; border-radius: 50%; background: var(--muted-2); margin: 0 8px; vertical-align: middle; }
+
+  /* ---------- Stats row ---------- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px 22px;
+    box-shadow: var(--shadow-soft);
+    transition: border-color .15s ease;
+  }
+  .stat:hover { border-color: var(--border-strong); }
+  .stat-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--ink-2);
+    font-size: 12.5px;
+    font-weight: 500;
+    margin-bottom: 16px;
+    letter-spacing: 0.005em;
+  }
+  .swatch {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--muted-2);
+    flex-shrink: 0;
+  }
+  .swatch.wish    { background: var(--wish); }
+  .swatch.applied { background: var(--applied); }
+  .swatch.intv    { background: var(--intv); }
+  .swatch.offer   { background: var(--offer); }
+  .swatch.rej     { background: var(--rej); }
+
+  .stat-num {
+    font-family: var(--font-mono);
+    font-size: 34px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .stat-delta {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .stat-delta strong {
+    color: var(--ink-2);
+    font-weight: 500;
+  }
+
+  /* ---------- Two-column layout ---------- */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+  }
+  .card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 22px 12px;
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .card-sub {
+    color: var(--muted);
+    font-size: 12.5px;
+    margin: 2px 0 0;
+  }
+  .card-link {
+    color: var(--muted);
+    font-size: 12.5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background .15s ease, color .15s ease;
+  }
+  .card-link:hover { background: var(--surface-2); color: var(--ink); }
+
+  /* Lists */
+  .list { padding: 4px 8px 12px; }
+  .row {
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    gap: 14px;
+    align-items: center;
+    padding: 14px 14px;
+    border-radius: var(--radius-sm);
+    transition: background .15s ease;
+    cursor: default;
+  }
+  .row:hover { background: var(--surface-2); }
+  .row + .row { border-top: 1px solid var(--border); }
+  .row:hover + .row { border-top-color: transparent; }
+
+  /* Company avatar */
+  .avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink-2);
+    letter-spacing: -0.01em;
+    flex-shrink: 0;
+  }
+
+  .row-main { min-width: 0; }
+  .row-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.35;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .row-meta {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-top: 3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .row-meta .pipe { color: var(--muted-2); }
+
+  .row-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .when {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--ink-2);
+    letter-spacing: -0.01em;
+  }
+  .when-sub {
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+
+  /* Badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 500;
+    line-height: 1.4;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--ink-2);
+  }
+  .badge .swatch { width: 5px; height: 5px; }
+  .badge-soon {
+    background: #fef3ec;
+    border-color: #f6e0cf;
+    color: #8a4a1c;
+  }
+  .badge-urgent {
+    background: #fbeae6;
+    border-color: #f1cfc6;
+    color: #94352a;
+  }
+
+  /* Empty / footnote */
+  .card-foot {
+    padding: 12px 22px 16px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* ---------- Quick add ---------- */
+  .quick-add {
+    margin-top: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-soft);
+    padding: 20px 22px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 20px;
+    align-items: center;
+  }
+  .qa-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .qa-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .qa-title { font-size: 14.5px; font-weight: 600; color: var(--ink); margin: 0; }
+  .qa-sub { font-size: 12.5px; color: var(--muted); margin: 2px 0 0; }
+  .qa-actions { display: flex; gap: 8px; align-items: center; }
+
+  /* Tiny utilities */
+  .hide-sm { }
+  .icon { width: 14px; height: 14px; }
+  .icon-sm { width: 12px; height: 12px; }
+
+  /* Subtle indigo accent for actionable primary numbers */
+  .stat.is-primary .stat-num { color: var(--ink); }
+  .stat.is-primary { border-color: var(--border); }
+
+</style>
+</head>
+<body>
+
+<!-- ============ TOP NAV ============ -->
+<header class="nav">
+  <div class="nav-inner">
+    <div class="brand">
+      <div class="brand-mark">T</div>
+      <span>TrackMyJob</span>
+    </div>
+
+    <nav class="nav-links">
+      <a class="nav-link is-active" href="#">Dashboard</a>
+      <a class="nav-link" href="#">All Jobs</a>
+      <a class="nav-link" href="#">Companies</a>
+      <a class="nav-link" href="#">Interviews</a>
+      <a class="nav-link" href="#">Notes</a>
+    </nav>
+
+    <div class="nav-right">
+      <div class="search">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="7" cy="7" r="4.5"></circle>
+          <path d="M10.5 10.5L13.5 13.5"></path>
+        </svg>
+        <input type="text" placeholder="Search jobs, companies…" />
+        <span class="kbd">⌘K</span>
+      </div>
+
+      <button class="btn btn-icon" aria-label="Settings">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="8" r="1.75"></circle>
+          <path d="M13.5 8a5.5 5.5 0 0 0-.09-1l1.27-.98-1.5-2.6-1.5.56a5.5 5.5 0 0 0-1.74-1l-.23-1.58h-3l-.23 1.58a5.5 5.5 0 0 0-1.74 1l-1.5-.56-1.5 2.6 1.27.98a5.6 5.6 0 0 0 0 2l-1.27.98 1.5 2.6 1.5-.56a5.5 5.5 0 0 0 1.74 1l.23 1.58h3l.23-1.58a5.5 5.5 0 0 0 1.74-1l1.5.56 1.5-2.6-1.27-.98c.06-.33.09-.66.09-1z"></path>
+        </svg>
+      </button>
+
+      <button class="btn btn-primary">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+          <path d="M8 3v10M3 8h10"></path>
+        </svg>
+        New application
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ============ MAIN ============ -->
+<main>
+
+  <!-- Page header -->
+  <section class="page-head">
+    <div>
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-sub">
+        Thursday, May 14
+        <span class="dot"></span>
+        52 active applications
+        <span class="dot"></span>
+        3 deadlines this week
+      </p>
+    </div>
+    <button class="btn btn-ghost">
+      <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2.5" y="3.5" width="11" height="10" rx="1.5"></rect>
+        <path d="M2.5 6.5h11M6 2.5v2M10 2.5v2"></path>
+      </svg>
+      May 2026
+    </button>
+  </section>
+
+  <!-- Stats -->
+  <section class="stats">
+    <div class="stat">
+      <div class="stat-label"><span class="swatch wish"></span>Wishlist</div>
+      <div class="stat-num">12</div>
+      <div class="stat-delta"><strong>+3</strong> this week</div>
+    </div>
+    <div class="stat is-primary">
+      <div class="stat-label"><span class="swatch applied"></span>Applied</div>
+      <div class="stat-num">24</div>
+      <div class="stat-delta"><strong>+5</strong> this week</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label"><span class="swatch intv"></span>Interview</div>
+      <div class="stat-num">06</div>
+      <div class="stat-delta"><strong>+2</strong> this week</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label"><span class="swatch offer"></span>Offer</div>
+      <div class="stat-num">02</div>
+      <div class="stat-delta"><strong>+1</strong> this week</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label"><span class="swatch rej"></span>Rejected</div>
+      <div class="stat-num">08</div>
+      <div class="stat-delta"><strong>—</strong> this week</div>
+    </div>
+  </section>
+
+  <!-- Two columns -->
+  <section class="grid-2">
+
+    <!-- Upcoming deadlines -->
+    <article class="card">
+      <header class="card-head">
+        <div>
+          <h2 class="card-title">
+            <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--ink-2)">
+              <circle cx="8" cy="8" r="6"></circle>
+              <path d="M8 5v3.2L10 10"></path>
+            </svg>
+            Upcoming deadlines
+          </h2>
+          <p class="card-sub">Closing in the next 3 days</p>
+        </div>
+        <a class="card-link" href="#">View all →</a>
+      </header>
+
+      <div class="list">
+        <div class="row">
+          <div class="avatar" style="background:#635bff; color:#fff; border-color:#635bff;">S</div>
+          <div class="row-main">
+            <div class="row-title">Senior Software Engineer</div>
+            <div class="row-meta">
+              Stripe
+              <span class="pipe">·</span>
+              <span class="badge"><span class="swatch applied"></span>Applied</span>
+            </div>
+          </div>
+          <div class="row-right">
+            <span class="when">Tomorrow</span>
+            <span class="when-sub">May 15</span>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="avatar" style="background:#0d0d0d; color:#fff; border-color:#0d0d0d;">L</div>
+          <div class="row-main">
+            <div class="row-title">Senior Frontend Engineer</div>
+            <div class="row-meta">
+              Linear
+              <span class="pipe">·</span>
+              <span class="badge"><span class="swatch wish"></span>Wishlist</span>
+            </div>
+          </div>
+          <div class="row-right">
+            <span class="when">In 2 days</span>
+            <span class="when-sub">May 16</span>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="avatar" style="background:#fef2ee; color:#dc4a26; border-color:#fbd9cc;">F</div>
+          <div class="row-main">
+            <div class="row-title">Product Designer, Platform</div>
+            <div class="row-meta">
+              Figma
+              <span class="pipe">·</span>
+              <span class="badge"><span class="swatch applied"></span>Applied</span>
+            </div>
+          </div>
+          <div class="row-right">
+            <span class="when">In 3 days</span>
+            <span class="when-sub">May 17</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-foot">
+        <span>Showing 3 of 3</span>
+        <span>Sorted by deadline</span>
+      </div>
+    </article>
+
+    <!-- Upcoming interviews -->
+    <article class="card">
+      <header class="card-head">
+        <div>
+          <h2 class="card-title">
+            <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--ink-2)">
+              <rect x="2" y="3" width="12" height="11" rx="1.5"></rect>
+              <path d="M2 6.5h12M5.5 2v2M10.5 2v2"></path>
+            </svg>
+            Upcoming interviews
+          </h2>
+          <p class="card-sub">Next 7 days</p>
+        </div>
+        <a class="card-link" href="#">View all →</a>
+      </header>
+
+      <div class="list">
+        <div class="row">
+          <div class="avatar" style="background:#635bff; color:#fff; border-color:#635bff;">S</div>
+          <div class="row-main">
+            <div class="row-title">Technical Round 2 — Stripe</div>
+            <div class="row-meta">
+              Senior Software Engineer
+              <span class="pipe">·</span>
+              60 min
+            </div>
+          </div>
+          <div class="row-right">
+            <span class="when">Tomorrow</span>
+            <span class="when-sub">10:00 AM</span>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="avatar" style="background:#0d0d0d; color:#fff; border-color:#0d0d0d;">V</div>
+          <div class="row-main">
+            <div class="row-title">Phone Screen — Vercel</div>
+            <div class="row-meta">
+              Staff Engineer, Edge
+              <span class="pipe">·</span>
+              30 min
+            </div>
+          </div>
+          <div class="row-right">
+            <span class="when">Fri, May 16</span>
+            <span class="when-sub">2:30 PM</span>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="avatar" style="background:#f5f3ee; color:#c96442; border-color:#ece6d8;">A</div>
+          <div class="row-main">
+            <div class="row-title">Final Round — Anthropic</div>
+            <div class="row-meta">
+              Product Engineer
+              <span class="pipe">·</span>
+              4 sessions
+            </div>
+          </div>
+          <div class="row-right">
+            <span class="when">Mon, May 18</span>
+            <span class="when-sub">11:00 AM</span>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="avatar" style="background:#fff; color:#1a1a1a; border-color:#e5e5e5;">N</div>
+          <div class="row-main">
+            <div class="row-title">Hiring Manager — Notion</div>
+            <div class="row-meta">
+              Senior Product Designer
+              <span class="pipe">·</span>
+              45 min
+            </div>
+          </div>
+          <div class="row-right">
+            <span class="when">Wed, May 20</span>
+            <span class="when-sub">9:30 AM</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-foot">
+        <span>Showing 4 of 6</span>
+        <span>Sorted by date</span>
+      </div>
+    </article>
+
+  </section>
+
+  <!-- Quick add -->
+  <section class="quick-add">
+    <div class="qa-left">
+      <div class="qa-icon">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+          <path d="M8 3v10M3 8h10"></path>
+        </svg>
+      </div>
+      <div>
+        <h3 class="qa-title">Track a new opportunity</h3>
+        <p class="qa-sub">Paste a job URL or fill in the details manually. Takes about 20 seconds.</p>
+      </div>
+    </div>
+    <div class="qa-actions">
+      <button class="btn btn-ghost">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 9l2-2a2.5 2.5 0 0 1 3.5 3.5l-2 2a2.5 2.5 0 0 1-3.5 0"></path>
+          <path d="M9 7l-2 2a2.5 2.5 0 0 1-3.5-3.5l2-2a2.5 2.5 0 0 1 3.5 0"></path>
+        </svg>
+        Paste URL
+      </button>
+      <button class="btn btn-primary">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+          <path d="M8 3v10M3 8h10"></path>
+        </svg>
+        New application
+      </button>
+    </div>
+  </section>
+
+</main>
+
+</body>
+</html>

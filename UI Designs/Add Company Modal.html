@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280" />
+<title>TrackMyJob — Add company</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:        #f7f5f0;
+    --surface:   #ffffff;
+    --surface-2: #fbfaf6;
+    --border:    #ece8dd;
+    --border-strong: #ddd7c7;
+    --ink:       #1f1d1a;
+    --ink-2:     #4b4843;
+    --muted:     #8c887e;
+    --muted-2:   #b3afa3;
+
+    --accent:    #4f46e5;
+    --accent-soft: #eef0ff;
+
+    --radius:    14px;
+    --radius-sm: 10px;
+    --shadow-soft: 0 1px 0 rgba(31,29,26,.02), 0 1px 2px rgba(31,29,26,.03);
+
+    --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "ss01", "cv11";
+    overflow: hidden;
+  }
+
+  /* ---------- Backdrop (the Companies page, dimmed) ---------- */
+  .backdrop {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    filter: blur(0px);
+  }
+  .backdrop::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: rgba(31, 29, 26, 0.32);
+    backdrop-filter: blur(2px);
+  }
+
+  /* Faked screenshot of background (minimal — nav + a couple of cards) */
+  .nav {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    max-width: 1180px; margin: 0 auto;
+    padding: 14px 32px;
+    display: flex; align-items: center; gap: 36px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
+  .brand-mark {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: var(--ink); color: var(--bg);
+    display: grid; place-items: center;
+    font-family: var(--font-mono); font-size: 12px; font-weight: 500;
+  }
+  .nav-links { display: flex; align-items: center; gap: 4px; }
+  .nav-link {
+    padding: 7px 12px; border-radius: 8px;
+    font-size: 13.5px; color: var(--ink-2); text-decoration: none;
+  }
+  .nav-link.is-active { color: var(--ink); background: rgba(31,29,26,.05); }
+  .nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .search-fake {
+    width: 240px; height: 34px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 9px;
+  }
+  .btn-fake-icon {
+    width: 34px; height: 34px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 9px;
+  }
+  .btn-fake {
+    height: 34px;
+    padding: 0 16px;
+    background: var(--ink);
+    border-radius: 9px;
+    color: var(--bg);
+    font-size: 13.5px;
+    font-weight: 500;
+    display: inline-flex; align-items: center;
+  }
+
+  .bg-content {
+    max-width: 1180px; margin: 0 auto;
+    padding: 44px 32px;
+  }
+  .bg-title {
+    font-size: 30px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 4px;
+  }
+  .bg-sub { color: var(--muted); font-size: 14px; margin: 0 0 28px; }
+  .bg-summary {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 28px;
+    height: 102px;
+  }
+  .bg-summary > div {
+    border-right: 1px solid var(--border);
+    padding: 18px;
+  }
+  .bg-summary > div:last-child { border-right: none; }
+  .bg-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+  }
+  .bg-card {
+    height: 192px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  /* ---------- Modal ---------- */
+  .modal {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 540px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 48px);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    box-shadow:
+      0 24px 64px -16px rgba(31,29,26,.30),
+      0 8px 24px -8px rgba(31,29,26,.16),
+      0 0 0 1px rgba(255,255,255,.04) inset;
+    z-index: 100;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+
+  .modal-head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 12px;
+    padding: 22px 24px 6px;
+  }
+  .modal-title {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    margin: 0;
+  }
+  .modal-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 4px 0 0;
+  }
+  .close-btn {
+    width: 30px; height: 30px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    color: var(--muted);
+    cursor: pointer;
+    display: grid; place-items: center;
+    transition: background .12s ease, color .12s ease;
+    flex-shrink: 0;
+  }
+  .close-btn:hover {
+    background: var(--surface-2);
+    color: var(--ink);
+  }
+
+  .modal-body {
+    padding: 18px 24px 4px;
+    overflow-y: auto;
+  }
+
+  /* Avatar pick row */
+  .avatar-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 20px;
+  }
+  .ar-preview {
+    width: 44px; height: 44px;
+    border-radius: 11px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    display: grid; place-items: center;
+    font-size: 18px; font-weight: 600;
+    color: var(--ink-2);
+    letter-spacing: -0.02em;
+    flex-shrink: 0;
+    transition: background .15s ease, color .15s ease;
+  }
+  .ar-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .ar-title {
+    font-size: 13px; font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .ar-colors {
+    display: flex; gap: 6px;
+  }
+  .color-chip {
+    width: 20px; height: 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform .12s ease;
+    position: relative;
+  }
+  .color-chip:hover { transform: scale(1.08); }
+  .color-chip.is-active {
+    border-color: var(--ink);
+    box-shadow: 0 0 0 2px var(--bg);
+  }
+  .color-chip[data-bg="indigo"]  { background: #635bff; }
+  .color-chip[data-bg="orange"]  { background: #fef2ee; box-shadow: inset 0 0 0 1px #fbd9cc; }
+  .color-chip[data-bg="black"]   { background: #0d0d0d; }
+  .color-chip[data-bg="green"]   { background: #eef9f1; box-shadow: inset 0 0 0 1px #cfead8; }
+  .color-chip[data-bg="warm"]    { background: #f5f3ee; box-shadow: inset 0 0 0 1px #ece6d8; }
+  .color-chip[data-bg="purple"]  { background: #6f3bcc; }
+  .color-chip[data-bg="yellow"]  { background: #fff7e6; box-shadow: inset 0 0 0 1px #f0e4c5; }
+
+  .upload-link {
+    font-size: 12px;
+    color: var(--accent);
+    background: none;
+    border: none;
+    padding: 0;
+    margin-left: auto;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex; align-items: center; gap: 4px;
+    flex-shrink: 0;
+  }
+  .upload-link:hover { text-decoration: underline; }
+
+  /* Fields */
+  .field {
+    margin-bottom: 16px;
+  }
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .label {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12.5px;
+    color: var(--ink-2);
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+  .label .req { color: var(--accent); }
+  .label .opt {
+    color: var(--muted-2); font-weight: 400; font-size: 11.5px;
+  }
+
+  .input, .select-trigger, .textarea {
+    width: 100%;
+    padding: 9px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 9px;
+    font-family: inherit;
+    font-size: 13.5px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color .12s ease, box-shadow .12s ease;
+    line-height: 1.4;
+  }
+  .input::placeholder, .textarea::placeholder { color: var(--muted-2); }
+  .input:focus, .textarea:focus, .select-trigger.is-focused {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79,70,229,.10);
+  }
+
+  .input-icon { position: relative; }
+  .input-icon .icon-left {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--muted-2);
+    pointer-events: none;
+  }
+  .input-icon .input { padding-left: 34px; }
+
+  /* Select trigger */
+  .select-trigger {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px;
+    cursor: pointer;
+    text-align: left;
+  }
+  .select-trigger.is-placeholder { color: var(--muted-2); }
+  .select-trigger .chev { color: var(--muted-2); flex-shrink: 0; }
+  .select-trigger:hover { background: var(--surface-2); }
+
+  /* URL helper */
+  .helper {
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-top: 6px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .helper.is-good { color: #2f8a5c; }
+  .helper svg { flex-shrink: 0; }
+
+  .textarea {
+    min-height: 70px;
+    resize: vertical;
+    line-height: 1.55;
+  }
+
+  /* Footer */
+  .modal-foot {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+  .foot-hint {
+    font-size: 12px;
+    color: var(--muted);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .foot-hint .swatch-mini {
+    width: 14px; height: 14px;
+    border-radius: 4px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: grid; place-items: center;
+    font-size: 9px;
+    flex-shrink: 0;
+  }
+  .foot-actions { display: flex; align-items: center; gap: 8px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 14px; border-radius: 9px;
+    font-size: 13.5px; font-weight: 500; font-family: inherit;
+    border: 1px solid transparent; cursor: pointer;
+    transition: background .15s ease, border-color .15s ease;
+    line-height: 1;
+  }
+  .btn-primary { background: var(--ink); color: var(--bg); }
+  .btn-primary:hover { background: #2d2a26; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink-2);
+    border-color: var(--border-strong);
+  }
+  .btn-ghost:hover { background: var(--surface); color: var(--ink); }
+  .btn .kbd-inline {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    opacity: .7;
+    background: rgba(255,255,255,.14);
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin-left: 2px;
+  }
+
+  .icon { width: 14px; height: 14px; }
+  .icon-sm { width: 12px; height: 12px; }
+
+</style>
+</head>
+<body>
+
+<!-- ============ BACKDROP (faked Companies page) ============ -->
+<div class="backdrop">
+  <header class="nav">
+    <div class="nav-inner">
+      <div class="brand">
+        <div class="brand-mark">T</div>
+        <span>TrackMyJob</span>
+      </div>
+      <nav class="nav-links">
+        <a class="nav-link" href="Dashboard.html">Dashboard</a>
+        <a class="nav-link" href="All Jobs.html">All Jobs</a>
+        <a class="nav-link is-active" href="Companies.html">Companies</a>
+        <a class="nav-link" href="#">Interviews</a>
+        <a class="nav-link" href="#">Notes</a>
+      </nav>
+      <div class="nav-right">
+        <div class="search-fake"></div>
+        <div class="btn-fake-icon"></div>
+        <div class="btn-fake">+ New application</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="bg-content">
+    <h1 class="bg-title">Companies</h1>
+    <p class="bg-sub"><strong style="color: var(--ink-2);">18</strong> companies · <strong style="color: var(--ink-2);">52</strong> total applications</p>
+    <div class="bg-summary">
+      <div></div><div></div><div></div><div></div>
+    </div>
+    <div class="bg-grid">
+      <div class="bg-card"></div>
+      <div class="bg-card"></div>
+      <div class="bg-card"></div>
+      <div class="bg-card"></div>
+      <div class="bg-card"></div>
+      <div class="bg-card"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL ============ -->
+<div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+
+  <header class="modal-head">
+    <div>
+      <h2 class="modal-title" id="modal-title">Add company</h2>
+      <p class="modal-sub">Track it now, even if you haven't applied yet.</p>
+    </div>
+    <button class="close-btn" aria-label="Close">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 4l8 8M12 4l-8 8"></path>
+      </svg>
+    </button>
+  </header>
+
+  <div class="modal-body">
+
+    <!-- Avatar + color picker -->
+    <div class="avatar-row">
+      <div class="ar-preview" id="preview" style="background:#635bff; color:#fff;">S</div>
+      <div class="ar-info">
+        <div class="ar-title">Avatar color</div>
+        <div class="ar-colors">
+          <span class="color-chip is-active" data-bg="indigo" title="Indigo"></span>
+          <span class="color-chip" data-bg="black" title="Black"></span>
+          <span class="color-chip" data-bg="purple" title="Purple"></span>
+          <span class="color-chip" data-bg="orange" title="Orange"></span>
+          <span class="color-chip" data-bg="green" title="Green"></span>
+          <span class="color-chip" data-bg="warm" title="Warm"></span>
+          <span class="color-chip" data-bg="yellow" title="Yellow"></span>
+        </div>
+      </div>
+      <button class="upload-link">
+        <svg class="icon-sm" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 11V3M5 6l3-3 3 3M3 11v2h10v-2"></path>
+        </svg>
+        Upload logo
+      </button>
+    </div>
+
+    <!-- Name -->
+    <div class="field">
+      <div class="label">Company name <span class="req">*</span></div>
+      <input class="input" type="text" value="Stripe" />
+      <div class="helper is-good">
+        <svg class="icon-sm" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="8" r="6"></circle>
+          <path d="M5.5 8.5l1.8 1.8 3.2-4"></path>
+        </svg>
+        Looks unique. No existing match in your tracker.
+      </div>
+    </div>
+
+    <!-- Industry + Size -->
+    <div class="field-row">
+      <div>
+        <div class="label">Industry</div>
+        <button class="select-trigger is-placeholder" type="button">
+          <span>Select industry…</span>
+          <svg class="icon chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 6l4 4 4-4"></path>
+          </svg>
+        </button>
+      </div>
+      <div>
+        <div class="label">Size <span class="opt">optional</span></div>
+        <button class="select-trigger is-placeholder" type="button">
+          <span>Headcount…</span>
+          <svg class="icon chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 6l4 4 4-4"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- HQ -->
+    <div class="field">
+      <div class="label">Headquarters <span class="opt">optional</span></div>
+      <div class="input-icon">
+        <span class="icon-left">
+          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 14s-5-4.5-5-8a5 5 0 0 1 10 0c0 3.5-5 8-5 8z"></path>
+            <circle cx="8" cy="6.2" r="1.8"></circle>
+          </svg>
+        </span>
+        <input class="input" type="text" placeholder="e.g. San Francisco, CA" />
+      </div>
+    </div>
+
+    <!-- Website + Careers -->
+    <div class="field-row">
+      <div>
+        <div class="label">Website <span class="opt">optional</span></div>
+        <div class="input-icon">
+          <span class="icon-left">
+            <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="8" cy="8" r="6"></circle>
+              <path d="M2 8h12M8 2c2 2 2 10 0 12M8 2c-2 2-2 10 0 12"></path>
+            </svg>
+          </span>
+          <input class="input" type="text" placeholder="stripe.com" />
+        </div>
+      </div>
+      <div>
+        <div class="label">Careers page <span class="opt">optional</span></div>
+        <div class="input-icon">
+          <span class="icon-left">
+            <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 9l2-2a2.5 2.5 0 0 1 3.5 3.5l-2 2a2.5 2.5 0 0 1-3.5 0"></path>
+              <path d="M9 7l-2 2a2.5 2.5 0 0 1-3.5-3.5l2-2a2.5 2.5 0 0 1 3.5 0"></path>
+            </svg>
+          </span>
+          <input class="input" type="text" placeholder="stripe.com/jobs" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="field">
+      <div class="label">Notes <span class="opt">optional</span></div>
+      <textarea class="textarea" placeholder="Why this company is interesting, contacts there, anything to remember…"></textarea>
+    </div>
+
+  </div>
+
+  <footer class="modal-foot">
+    <span class="foot-hint">
+      <span class="swatch-mini">✓</span>
+      You can add applications after saving.
+    </span>
+    <div class="foot-actions">
+      <button class="btn btn-ghost">Cancel</button>
+      <button class="btn btn-primary">
+        Add company
+        <span class="kbd-inline">⌘↵</span>
+      </button>
+    </div>
+  </footer>
+
+</div>
+
+</body>
+</html>

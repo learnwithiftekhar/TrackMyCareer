@@ -1,0 +1,908 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280" />
+<title>TrackMyJob — New application</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:        #f7f5f0;
+    --surface:   #ffffff;
+    --surface-2: #fbfaf6;
+    --border:    #ece8dd;
+    --border-strong: #ddd7c7;
+    --ink:       #1f1d1a;
+    --ink-2:     #4b4843;
+    --muted:     #8c887e;
+    --muted-2:   #b3afa3;
+
+    --accent:    #4f46e5;
+    --accent-2:  #6366f1;
+    --accent-soft: #eef0ff;
+    --accent-ink:  #3730a3;
+
+    --wish:    #9c8d6d;
+    --applied: #4f46e5;
+    --intv:    #b8854a;
+    --offer:   #2f8a5c;
+    --rej:     #b04a3f;
+
+    --radius:    14px;
+    --radius-sm: 10px;
+    --shadow-soft: 0 1px 0 rgba(31,29,26,.02), 0 1px 2px rgba(31,29,26,.03);
+
+    --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  /* ---------- Top nav ---------- */
+  .nav {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(247, 245, 240, 0.85);
+    backdrop-filter: saturate(140%) blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    max-width: 1180px; margin: 0 auto;
+    padding: 14px 32px;
+    display: flex; align-items: center; gap: 36px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
+  .brand-mark {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: var(--ink); color: var(--bg);
+    display: grid; place-items: center;
+    font-family: var(--font-mono); font-size: 12px; font-weight: 500;
+  }
+  .nav-links { display: flex; align-items: center; gap: 4px; }
+  .nav-link {
+    padding: 7px 12px; border-radius: 8px;
+    font-size: 13.5px; color: var(--ink-2); text-decoration: none;
+    transition: background .15s ease, color .15s ease;
+  }
+  .nav-link:hover { background: rgba(31,29,26,.04); color: var(--ink); }
+  .nav-link.is-active { color: var(--ink); background: rgba(31,29,26,.05); }
+  .nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 14px; border-radius: 9px;
+    font-size: 13.5px; font-weight: 500; font-family: inherit;
+    border: 1px solid transparent; cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, transform .05s ease;
+    line-height: 1; text-decoration: none;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--ink); color: var(--bg); }
+  .btn-primary:hover { background: #2d2a26; }
+  .btn-ghost {
+    background: transparent; color: var(--ink-2);
+    border-color: var(--border-strong);
+  }
+  .btn-ghost:hover { background: var(--surface); color: var(--ink); }
+  .btn-icon {
+    width: 34px; height: 34px; padding: 0; justify-content: center;
+    background: transparent; border: 1px solid var(--border-strong);
+    color: var(--ink-2); border-radius: 9px;
+  }
+  .btn-icon:hover { background: var(--surface); color: var(--ink); }
+  .btn-text {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--muted);
+    padding: 8px 10px;
+  }
+  .btn-text:hover { color: var(--ink-2); background: rgba(31,29,26,.04); }
+
+  /* Nav search */
+  .search { position: relative; width: 240px; }
+  .search input {
+    width: 100%;
+    padding: 8px 12px 8px 32px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 9px;
+    font-family: inherit; font-size: 13px; color: var(--ink);
+    outline: none;
+  }
+  .search input::placeholder { color: var(--muted-2); }
+  .search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,.10); }
+  .search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted-2); }
+  .kbd {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    font-family: var(--font-mono); font-size: 11px; color: var(--muted);
+    background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px;
+  }
+
+  /* ---------- Main shell ---------- */
+  main {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 28px 32px 100px;
+  }
+
+  /* Breadcrumb */
+  .crumbs {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--muted);
+    margin-bottom: 22px;
+  }
+  .crumbs a { color: var(--muted); text-decoration: none; transition: color .12s ease; }
+  .crumbs a:hover { color: var(--ink-2); }
+  .crumbs .sep { color: var(--muted-2); }
+  .crumbs .current { color: var(--ink-2); }
+
+  /* Header */
+  .page-head {
+    margin-bottom: 28px;
+  }
+  .page-title {
+    font-size: 30px; font-weight: 600; letter-spacing: -0.02em;
+    margin: 0 0 4px;
+  }
+  .page-sub { color: var(--muted); font-size: 14px; margin: 0; }
+
+  /* ---------- Quick paste card ---------- */
+  .paste {
+    background: linear-gradient(180deg, var(--accent-soft), var(--surface) 80%);
+    border: 1px solid #d8dafd;
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 32px;
+    display: grid;
+    grid-template-columns: 38px 1fr auto;
+    gap: 16px;
+    align-items: center;
+  }
+  .paste-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: #fff;
+    color: var(--accent);
+    display: grid; place-items: center;
+    border: 1px solid #dadcfa;
+  }
+  .paste-title {
+    font-size: 14px; font-weight: 600; color: var(--ink); margin: 0;
+  }
+  .paste-sub {
+    font-size: 12.5px; color: var(--muted); margin: 2px 0 0;
+  }
+  .paste-input-wrap {
+    grid-column: 1 / -1;
+    display: flex; gap: 8px;
+    margin-top: 4px;
+  }
+  .paste-input {
+    flex: 1;
+    padding: 10px 14px;
+    background: #fff;
+    border: 1px solid #dadcfa;
+    border-radius: 10px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--ink);
+    outline: none;
+  }
+  .paste-input::placeholder { color: var(--muted-2); font-family: var(--font-sans); }
+  .paste-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,.12); }
+  .paste-btn {
+    background: var(--accent);
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+  }
+  .paste-btn:hover { background: #4338ca; }
+
+  /* ---------- Divider ---------- */
+  .or-divider {
+    display: flex; align-items: center; gap: 14px;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 0 0 24px;
+  }
+  .or-divider::before,
+  .or-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border-strong);
+  }
+
+  /* ---------- Form sections ---------- */
+  .section {
+    margin-bottom: 32px;
+  }
+  .section-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .section-aside {
+    font-size: 12px; color: var(--muted-2);
+  }
+
+  .field-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+  }
+  .field {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 20px;
+    padding: 14px 22px;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .field:last-child { border-bottom: none; }
+  .field-row-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .label {
+    font-size: 13px;
+    color: var(--ink-2);
+    font-weight: 500;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .label .req {
+    color: var(--accent);
+    font-size: 12px;
+  }
+  .label .opt {
+    color: var(--muted-2);
+    font-size: 11.5px;
+    font-weight: 400;
+  }
+
+  /* Inputs */
+  .input, .textarea, .select-trigger {
+    width: 100%;
+    padding: 8px 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--ink);
+    outline: none;
+    transition: background .12s ease, border-color .12s ease, box-shadow .12s ease;
+    line-height: 1.4;
+  }
+  .input:hover, .textarea:hover, .select-trigger:hover {
+    background: var(--surface-2);
+  }
+  .input:focus, .textarea:focus, .select-trigger.is-focused {
+    background: #fff;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79,70,229,.10);
+  }
+  .input::placeholder, .textarea::placeholder {
+    color: var(--muted-2);
+  }
+  .input.has-value { color: var(--ink); }
+
+  .input-icon {
+    position: relative;
+    width: 100%;
+  }
+  .input-icon .icon-left {
+    position: absolute;
+    left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--muted-2);
+    pointer-events: none;
+  }
+  .input-icon .input { padding-left: 34px; }
+
+  /* Company combo with avatar */
+  .combo {
+    display: flex; align-items: center; gap: 10px;
+    padding: 4px 12px 4px 4px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: text;
+    transition: background .12s ease, border-color .12s ease, box-shadow .12s ease;
+  }
+  .combo:hover { background: var(--surface-2); }
+  .combo:focus-within { background: #fff; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,.10); }
+  .combo-avatar {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    background: #635bff; color: #fff;
+    display: grid; place-items: center;
+    font-size: 13px; font-weight: 600;
+    flex-shrink: 0;
+  }
+  .combo input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--ink);
+    padding: 8px 0;
+  }
+  .combo .chev {
+    color: var(--muted-2);
+    flex-shrink: 0;
+  }
+  .combo-hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .combo-hint .swatch-mini {
+    width: 14px; height: 14px;
+    border-radius: 4px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: grid; place-items: center;
+    font-size: 9px;
+    flex-shrink: 0;
+  }
+
+  /* Status segmented */
+  .seg {
+    display: flex;
+    gap: 4px;
+    padding: 3px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    width: fit-content;
+  }
+  .seg-opt {
+    padding: 6px 12px;
+    border-radius: 7px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border: 1px solid transparent;
+    background: transparent;
+    font-family: inherit;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: background .12s ease, color .12s ease;
+    line-height: 1.4;
+  }
+  .seg-opt:hover { color: var(--ink-2); }
+  .seg-opt.is-active {
+    background: var(--surface);
+    color: var(--ink);
+    border-color: var(--border-strong);
+    box-shadow: 0 1px 0 rgba(31,29,26,.04);
+  }
+  .seg-opt .swatch {
+    width: 7px; height: 7px; border-radius: 50%;
+  }
+  .swatch.wish    { background: var(--wish); }
+  .swatch.applied { background: var(--applied); }
+  .swatch.intv    { background: var(--intv); }
+  .swatch.offer   { background: var(--offer); }
+  .swatch.rej     { background: var(--rej); }
+
+  /* Select trigger */
+  .select-trigger {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .select-trigger.is-placeholder { color: var(--muted-2); }
+  .select-trigger .chev { color: var(--muted-2); flex-shrink: 0; }
+  .select-trigger:hover { background: var(--surface-2); }
+
+  /* Date input look */
+  .date-pair {
+    display: flex; gap: 8px; align-items: center;
+  }
+  .date-input {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: -0.01em;
+  }
+  .deadline-hint {
+    font-size: 12px;
+    color: #94352a;
+    background: #fbeae6;
+    border: 1px solid #f1cfc6;
+    padding: 2px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  /* Salary range */
+  .range {
+    display: grid;
+    grid-template-columns: 80px 1fr 1fr 80px;
+    gap: 8px;
+    align-items: center;
+  }
+  .range .currency {
+    font-size: 13px;
+    color: var(--ink-2);
+    background: var(--surface-2);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    padding: 8px 10px;
+    display: flex; align-items: center; gap: 6px;
+    justify-content: center;
+    font-weight: 500;
+  }
+  .range .currency .chev { color: var(--muted-2); }
+  .range .dash {
+    color: var(--muted-2);
+    text-align: center;
+    font-size: 14px;
+  }
+  .range .period {
+    font-size: 12.5px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  /* Textarea */
+  .textarea {
+    min-height: 120px;
+    resize: vertical;
+    line-height: 1.55;
+    padding: 10px 12px;
+  }
+  .textarea-lg { min-height: 200px; }
+
+  .text-row {
+    grid-template-columns: 140px 1fr;
+    align-items: flex-start;
+  }
+  .text-row .label { padding-top: 10px; }
+
+  /* Helper / character count */
+  .helper {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px;
+  }
+  .helper .right { font-family: var(--font-mono); color: var(--muted-2); }
+
+  /* Toolbar (textarea) */
+  .editor-bar {
+    display: flex;
+    gap: 2px;
+    padding: 6px 8px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+  }
+  .editor-btn {
+    padding: 4px 7px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    cursor: pointer;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-flex; align-items: center;
+  }
+  .editor-btn:hover { background: var(--surface); color: var(--ink-2); }
+  .editor-divider {
+    width: 1px; height: 16px;
+    background: var(--border-strong);
+    align-self: center;
+    margin: 0 4px;
+  }
+  .editor-wrap .textarea {
+    border-radius: 0 0 8px 8px;
+    border: 1px solid var(--border);
+    border-top: none;
+    padding: 12px 14px;
+  }
+  .editor-wrap:focus-within .editor-bar {
+    border-color: var(--accent);
+  }
+  .editor-wrap:focus-within .textarea {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79,70,229,.10);
+    background: #fff;
+  }
+
+  /* ---------- Sticky footer ---------- */
+  .footer-bar {
+    position: sticky;
+    bottom: 16px;
+    margin-top: 32px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    padding: 12px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+    box-shadow: 0 4px 16px -8px rgba(31,29,26,.16), 0 1px 2px rgba(31,29,26,.04);
+  }
+  .footer-status {
+    font-size: 12.5px; color: var(--muted);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .footer-status .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--offer);
+  }
+  .footer-actions { display: flex; align-items: center; gap: 8px; }
+
+  .icon { width: 14px; height: 14px; }
+  .icon-sm { width: 12px; height: 12px; }
+
+</style>
+</head>
+<body>
+
+<!-- ============ TOP NAV ============ -->
+<header class="nav">
+  <div class="nav-inner">
+    <div class="brand">
+      <div class="brand-mark">T</div>
+      <span>TrackMyJob</span>
+    </div>
+
+    <nav class="nav-links">
+      <a class="nav-link" href="Dashboard.html">Dashboard</a>
+      <a class="nav-link is-active" href="All Jobs.html">All Jobs</a>
+      <a class="nav-link" href="#">Companies</a>
+      <a class="nav-link" href="#">Interviews</a>
+      <a class="nav-link" href="#">Notes</a>
+    </nav>
+
+    <div class="nav-right">
+      <div class="search">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="7" cy="7" r="4.5"></circle>
+          <path d="M10.5 10.5L13.5 13.5"></path>
+        </svg>
+        <input type="text" placeholder="Search jobs, companies…" />
+        <span class="kbd">⌘K</span>
+      </div>
+
+      <button class="btn btn-icon" aria-label="Settings">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="8" r="1.75"></circle>
+          <path d="M13.5 8a5.5 5.5 0 0 0-.09-1l1.27-.98-1.5-2.6-1.5.56a5.5 5.5 0 0 0-1.74-1l-.23-1.58h-3l-.23 1.58a5.5 5.5 0 0 0-1.74 1l-1.5-.56-1.5 2.6 1.27.98a5.6 5.6 0 0 0 0 2l-1.27.98 1.5 2.6 1.5-.56a5.5 5.5 0 0 0 1.74 1l.23 1.58h3l.23-1.58a5.5 5.5 0 0 0 1.74-1l1.5.56 1.5-2.6-1.27-.98c.06-.33.09-.66.09-1z"></path>
+        </svg>
+      </button>
+
+      <button class="btn btn-primary">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+          <path d="M8 3v10M3 8h10"></path>
+        </svg>
+        New application
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ============ MAIN ============ -->
+<main>
+
+  <!-- Breadcrumb -->
+  <nav class="crumbs">
+    <a href="All Jobs.html">All Jobs</a>
+    <svg class="icon-sm sep" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 4l4 4-4 4"></path>
+    </svg>
+    <span class="current">New application</span>
+  </nav>
+
+  <!-- Header -->
+  <section class="page-head">
+    <h1 class="page-title">New application</h1>
+    <p class="page-sub">Add a job to your tracker. Takes about 20 seconds.</p>
+  </section>
+
+  <!-- Paste URL card -->
+  <section class="paste">
+    <div class="paste-icon">
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M7 9l2-2a2.5 2.5 0 0 1 3.5 3.5l-2 2a2.5 2.5 0 0 1-3.5 0"></path>
+        <path d="M9 7l-2 2a2.5 2.5 0 0 1-3.5-3.5l2-2a2.5 2.5 0 0 1 3.5 0"></path>
+      </svg>
+    </div>
+    <div>
+      <h3 class="paste-title">Paste a job URL to autofill</h3>
+      <p class="paste-sub">We'll pull the company, role, location, and description from the listing.</p>
+    </div>
+    <div></div>
+    <div class="paste-input-wrap">
+      <input class="paste-input" type="text" placeholder="https://stripe.com/jobs/listing/…" />
+      <button class="paste-btn">Autofill</button>
+    </div>
+  </section>
+
+  <div class="or-divider">Or fill in manually</div>
+
+  <!-- ROLE -->
+  <section class="section">
+    <header class="section-head">
+      <h2 class="section-title">Role</h2>
+      <span class="section-aside">Required fields marked <span style="color: var(--accent);">*</span></span>
+    </header>
+    <div class="field-card">
+
+      <div class="field">
+        <div class="label">Job title <span class="req">*</span></div>
+        <input class="input has-value" type="text" value="Senior Software Engineer, Platform" />
+      </div>
+
+      <div class="field">
+        <div class="label">Company <span class="req">*</span></div>
+        <div>
+          <div class="combo">
+            <div class="combo-avatar">S</div>
+            <input type="text" value="Stripe" />
+            <svg class="icon chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 6l4 4 4-4"></path>
+            </svg>
+          </div>
+          <div class="combo-hint">
+            <span class="swatch-mini">✓</span>
+            Matched to existing company · 4 other applications tracked
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="label">Location</div>
+        <div class="field-row-split">
+          <input class="input has-value" type="text" value="Remote · US" placeholder="e.g. San Francisco, Hybrid" />
+          <button class="select-trigger" style="border: 1px solid var(--border-strong);">
+            <span>Full-time</span>
+            <svg class="icon chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 6l4 4 4-4"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="label">Job URL</div>
+        <div class="input-icon">
+          <span class="icon-left">
+            <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 9l2-2a2.5 2.5 0 0 1 3.5 3.5l-2 2a2.5 2.5 0 0 1-3.5 0"></path>
+              <path d="M9 7l-2 2a2.5 2.5 0 0 1-3.5-3.5l2-2a2.5 2.5 0 0 1 3.5 0"></path>
+            </svg>
+          </span>
+          <input class="input has-value" type="text" value="https://stripe.com/jobs/listing/senior-software-engineer-platform" />
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- TIMELINE -->
+  <section class="section">
+    <header class="section-head">
+      <h2 class="section-title">Timeline</h2>
+    </header>
+    <div class="field-card">
+
+      <div class="field">
+        <div class="label">Status</div>
+        <div class="seg">
+          <button class="seg-opt"><span class="swatch wish"></span>Wishlist</button>
+          <button class="seg-opt is-active"><span class="swatch applied"></span>Applied</button>
+          <button class="seg-opt"><span class="swatch intv"></span>Interview</button>
+          <button class="seg-opt"><span class="swatch offer"></span>Offer</button>
+          <button class="seg-opt"><span class="swatch rej"></span>Rejected</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="label">Applied on</div>
+        <div class="date-pair">
+          <div class="input-icon" style="max-width: 200px;">
+            <span class="icon-left">
+              <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="12" height="11" rx="1.5"></rect>
+                <path d="M2 6.5h12M5.5 2v2M10.5 2v2"></path>
+              </svg>
+            </span>
+            <input class="input has-value date-input" type="text" value="May 02, 2026" />
+          </div>
+          <span style="color: var(--muted); font-size: 12.5px;">12 days ago</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="label">Deadline <span class="opt">optional</span></div>
+        <div class="date-pair">
+          <div class="input-icon" style="max-width: 200px;">
+            <span class="icon-left">
+              <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="8" cy="8" r="6"></circle>
+                <path d="M8 5v3.2L10 10"></path>
+              </svg>
+            </span>
+            <input class="input has-value date-input" type="text" value="May 15, 2026" />
+          </div>
+          <span class="deadline-hint">Tomorrow</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- DETAILS -->
+  <section class="section">
+    <header class="section-head">
+      <h2 class="section-title">Details</h2>
+    </header>
+    <div class="field-card">
+
+      <div class="field">
+        <div class="label">Source</div>
+        <button class="select-trigger" style="border: 1px solid var(--border-strong); max-width: 280px;">
+          <span style="display:inline-flex; align-items:center; gap: 8px;">
+            <span style="width: 16px; height: 16px; border-radius: 4px; background: #0a66c2; color: #fff; display: inline-grid; place-items: center; font-size: 10px; font-weight: 700;">in</span>
+            LinkedIn
+          </span>
+          <svg class="icon chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 6l4 4 4-4"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="field">
+        <div class="label">Salary <span class="opt">optional</span></div>
+        <div class="range">
+          <div class="currency">
+            USD
+            <svg class="icon-sm chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 6l4 4 4-4"></path>
+            </svg>
+          </div>
+          <input class="input has-value date-input" type="text" value="210,000" style="text-align: right;" />
+          <input class="input has-value date-input" type="text" value="260,000" style="text-align: right;" />
+          <div class="period">/ year</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="label">Referral <span class="opt">optional</span></div>
+        <input class="input" type="text" placeholder="Name of referrer at the company" />
+      </div>
+
+    </div>
+  </section>
+
+  <!-- CONTENT -->
+  <section class="section">
+    <header class="section-head">
+      <h2 class="section-title">Content</h2>
+      <span class="section-aside">Saved as part of this application</span>
+    </header>
+    <div class="field-card">
+
+      <div class="field text-row">
+        <div class="label">Description</div>
+        <div>
+          <div class="editor-wrap">
+            <div class="editor-bar">
+              <button class="editor-btn" style="font-weight: 700;">B</button>
+              <button class="editor-btn" style="font-style: italic;">I</button>
+              <button class="editor-btn" style="text-decoration: underline;">U</button>
+              <span class="editor-divider"></span>
+              <button class="editor-btn">H1</button>
+              <button class="editor-btn">H2</button>
+              <span class="editor-divider"></span>
+              <button class="editor-btn">
+                <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="4" cy="5" r=".5" fill="currentColor"/><circle cx="4" cy="8" r=".5" fill="currentColor"/><circle cx="4" cy="11" r=".5" fill="currentColor"/>
+                  <path d="M7 5h7M7 8h7M7 11h7"/>
+                </svg>
+              </button>
+              <button class="editor-btn">
+                <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M7 9l2-2a2.5 2.5 0 0 1 3.5 3.5l-2 2a2.5 2.5 0 0 1-3.5 0"/>
+                  <path d="M9 7l-2 2a2.5 2.5 0 0 1-3.5-3.5l2-2a2.5 2.5 0 0 1 3.5 0"/>
+                </svg>
+              </button>
+            </div>
+            <textarea class="textarea textarea-lg" placeholder="Paste or write the job description…">We're looking for a senior engineer to join the Platform team, where we build the foundational infrastructure that powers billions of API requests per day. You'll work across the stack — Go, Ruby, and React — and own systems end-to-end.
+
+What you'll do
+- Design and ship high-throughput, low-latency services
+- Improve developer experience across the engineering org
+- Partner with product to scope and ship platform-level features</textarea>
+          </div>
+          <div class="helper">
+            <span>Markdown supported</span>
+            <span class="right">412 / 5000</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="field text-row">
+        <div class="label">Cover letter <span class="opt">optional</span></div>
+        <div>
+          <textarea class="textarea" placeholder="Draft your cover letter here. You can copy it into the application later."></textarea>
+          <div class="helper">
+            <span>You can generate a first draft from the job description.</span>
+            <button class="btn btn-text" style="padding: 4px 8px; font-size: 12px;">
+              <svg class="icon-sm" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 2l1.5 4L14 7.5l-4.5 1.5L8 13l-1.5-4L2 7.5 6.5 6z"/>
+              </svg>
+              Generate draft
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="field text-row">
+        <div class="label">Notes <span class="opt">optional</span></div>
+        <textarea class="textarea" placeholder="Anything to remember about this role — comp signals, who referred you, follow-up dates…"></textarea>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Sticky footer -->
+  <div class="footer-bar">
+    <div class="footer-status">
+      <span class="dot"></span>
+      Draft saved a moment ago
+    </div>
+    <div class="footer-actions">
+      <button class="btn btn-text">Cancel</button>
+      <button class="btn btn-ghost">Save as draft</button>
+      <button class="btn btn-primary">
+        Save application
+        <span style="font-family: var(--font-mono); font-size: 11px; opacity: .7; background: rgba(255,255,255,.12); padding: 1px 5px; border-radius: 4px; margin-left: 2px;">⌘↵</span>
+      </button>
+    </div>
+  </div>
+
+</main>
+
+</body>
+</html>

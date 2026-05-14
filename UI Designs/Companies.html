@@ -1,0 +1,995 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280" />
+<title>TrackMyJob — Companies</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:        #f7f5f0;
+    --surface:   #ffffff;
+    --surface-2: #fbfaf6;
+    --border:    #ece8dd;
+    --border-strong: #ddd7c7;
+    --ink:       #1f1d1a;
+    --ink-2:     #4b4843;
+    --muted:     #8c887e;
+    --muted-2:   #b3afa3;
+
+    --accent:    #4f46e5;
+    --accent-soft: #eef0ff;
+
+    --wish:    #9c8d6d;
+    --applied: #4f46e5;
+    --intv:    #b8854a;
+    --offer:   #2f8a5c;
+    --rej:     #b04a3f;
+
+    --radius:    14px;
+    --radius-sm: 10px;
+    --shadow-soft: 0 1px 0 rgba(31,29,26,.02), 0 1px 2px rgba(31,29,26,.03);
+
+    --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  /* ---------- Top nav ---------- */
+  .nav {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(247, 245, 240, 0.85);
+    backdrop-filter: saturate(140%) blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    max-width: 1180px; margin: 0 auto;
+    padding: 14px 32px;
+    display: flex; align-items: center; gap: 36px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
+  .brand-mark {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: var(--ink); color: var(--bg);
+    display: grid; place-items: center;
+    font-family: var(--font-mono); font-size: 12px; font-weight: 500;
+  }
+  .nav-links { display: flex; align-items: center; gap: 4px; }
+  .nav-link {
+    padding: 7px 12px; border-radius: 8px;
+    font-size: 13.5px; color: var(--ink-2); text-decoration: none;
+    transition: background .15s ease, color .15s ease;
+  }
+  .nav-link:hover { background: rgba(31,29,26,.04); color: var(--ink); }
+  .nav-link.is-active { color: var(--ink); background: rgba(31,29,26,.05); }
+  .nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 14px; border-radius: 9px;
+    font-size: 13.5px; font-weight: 500; font-family: inherit;
+    border: 1px solid transparent; cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, transform .05s ease;
+    line-height: 1; text-decoration: none;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--ink); color: var(--bg); }
+  .btn-primary:hover { background: #2d2a26; }
+  .btn-ghost {
+    background: transparent; color: var(--ink-2);
+    border-color: var(--border-strong);
+  }
+  .btn-ghost:hover { background: var(--surface); color: var(--ink); }
+  .btn-icon {
+    width: 34px; height: 34px; padding: 0; justify-content: center;
+    background: transparent; border: 1px solid var(--border-strong);
+    color: var(--ink-2); border-radius: 9px;
+  }
+  .btn-icon:hover { background: var(--surface); color: var(--ink); }
+
+  /* Search (nav) */
+  .search { position: relative; width: 240px; }
+  .search input {
+    width: 100%;
+    padding: 8px 12px 8px 32px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 9px;
+    font-family: inherit; font-size: 13px; color: var(--ink);
+    outline: none;
+  }
+  .search input::placeholder { color: var(--muted-2); }
+  .search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,.10); }
+  .search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted-2); }
+  .kbd {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    font-family: var(--font-mono); font-size: 11px; color: var(--muted);
+    background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px;
+  }
+
+  /* ---------- Main shell ---------- */
+  main {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 44px 32px 80px;
+  }
+
+  /* Page header */
+  .page-head {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 24px; margin-bottom: 28px;
+  }
+  .page-title { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 4px; }
+  .page-sub { color: var(--muted); font-size: 14px; margin: 0; }
+  .page-sub strong { color: var(--ink-2); font-weight: 500; }
+
+  /* ---------- Toolbar ---------- */
+  .toolbar {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .toolbar-search {
+    position: relative; flex: 1; min-width: 280px; max-width: 420px;
+  }
+  .toolbar-search input {
+    width: 100%; padding: 9px 14px 9px 36px;
+    background: var(--surface); border: 1px solid var(--border-strong);
+    border-radius: 10px; font-family: inherit; font-size: 13.5px; color: var(--ink);
+    outline: none;
+  }
+  .toolbar-search input::placeholder { color: var(--muted-2); }
+  .toolbar-search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,.10); }
+  .toolbar-search svg {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--muted-2);
+  }
+  .divider { width: 1px; height: 22px; background: var(--border-strong); margin: 0 4px; }
+
+  /* Sort + view toggle */
+  .sort-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 12px; border-radius: 10px;
+    background: var(--surface); color: var(--ink-2);
+    border: 1px solid var(--border-strong);
+    font-size: 13px; font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .sort-btn:hover { background: var(--surface-2); color: var(--ink); }
+
+  .view-toggle {
+    display: inline-flex;
+    padding: 3px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    gap: 2px;
+  }
+  .view-btn {
+    width: 32px; height: 28px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 7px;
+    border: none; background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .view-btn:hover { color: var(--ink-2); }
+  .view-btn.is-active {
+    background: var(--bg);
+    color: var(--ink);
+  }
+
+  /* ---------- Summary band ---------- */
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+  .sum-cell {
+    padding: 18px 22px;
+    border-right: 1px solid var(--border);
+  }
+  .sum-cell:last-child { border-right: none; }
+  .sum-label {
+    font-size: 12px; color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+    margin-bottom: 10px;
+  }
+  .sum-val {
+    font-family: var(--font-mono);
+    font-size: 24px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .sum-sub {
+    font-size: 12px; color: var(--muted);
+    margin-top: 6px;
+  }
+
+  /* ---------- Company grid ---------- */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .co-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-soft);
+    padding: 18px 20px 16px;
+    display: flex; flex-direction: column;
+    transition: border-color .15s ease, transform .12s ease;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    min-height: 192px;
+  }
+  .co-card:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-1px);
+  }
+  .co-top {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .co-id {
+    display: flex; align-items: center; gap: 12px;
+    min-width: 0;
+  }
+  .co-avatar {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: grid; place-items: center;
+    font-size: 16px; font-weight: 600;
+    letter-spacing: -0.02em;
+    flex-shrink: 0;
+  }
+  .co-meta { min-width: 0; }
+  .co-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .co-tag {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .co-action {
+    color: var(--muted-2);
+    width: 24px; height: 24px;
+    border-radius: 6px;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .co-action:hover { background: var(--bg); color: var(--ink-2); }
+
+  /* count + bar */
+  .co-count-row {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .co-count {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .co-count-label {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-left: 6px;
+    font-family: var(--font-sans);
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+  .co-active-pill {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+
+  /* status segmented bar */
+  .seg-bar {
+    height: 6px;
+    display: flex;
+    border-radius: 3px;
+    overflow: hidden;
+    background: var(--bg);
+    margin-bottom: 12px;
+  }
+  .seg-bar > span {
+    display: block;
+    height: 100%;
+  }
+  .seg-w    { background: var(--wish); }
+  .seg-a    { background: var(--applied); }
+  .seg-i    { background: var(--intv); }
+  .seg-o    { background: var(--offer); }
+  .seg-r    { background: var(--rej); }
+
+  .legend {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .legend-item .swatch {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+  }
+  .legend-item .n {
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 500;
+  }
+  .swatch.wish    { background: var(--wish); }
+  .swatch.applied { background: var(--applied); }
+  .swatch.intv    { background: var(--intv); }
+  .swatch.offer   { background: var(--offer); }
+  .swatch.rej     { background: var(--rej); }
+
+  .co-foot {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .co-foot strong {
+    color: var(--ink-2);
+    font-weight: 500;
+  }
+  .co-foot .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .co-foot .dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--muted-2);
+  }
+
+  /* Empty add card */
+  .add-card {
+    background: transparent;
+    border: 1.5px dashed var(--border-strong);
+    border-radius: var(--radius);
+    padding: 18px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px;
+    text-align: center;
+    color: var(--muted);
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease, color .15s ease;
+    min-height: 192px;
+  }
+  .add-card:hover {
+    border-color: var(--accent);
+    background: rgba(79,70,229,.03);
+    color: var(--accent);
+  }
+  .add-icon {
+    width: 32px; height: 32px;
+    border-radius: 9px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    display: grid; place-items: center;
+    color: var(--ink-2);
+  }
+  .add-card:hover .add-icon {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: #fff;
+  }
+  .add-title { font-size: 13.5px; font-weight: 500; }
+  .add-sub { font-size: 12px; color: var(--muted-2); }
+
+  .icon { width: 14px; height: 14px; }
+  .icon-sm { width: 12px; height: 12px; }
+
+</style>
+</head>
+<body>
+
+<!-- ============ TOP NAV ============ -->
+<header class="nav">
+  <div class="nav-inner">
+    <div class="brand">
+      <div class="brand-mark">T</div>
+      <span>TrackMyJob</span>
+    </div>
+
+    <nav class="nav-links">
+      <a class="nav-link" href="Dashboard.html">Dashboard</a>
+      <a class="nav-link" href="All Jobs.html">All Jobs</a>
+      <a class="nav-link is-active" href="#">Companies</a>
+      <a class="nav-link" href="#">Interviews</a>
+      <a class="nav-link" href="#">Notes</a>
+    </nav>
+
+    <div class="nav-right">
+      <div class="search">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="7" cy="7" r="4.5"></circle>
+          <path d="M10.5 10.5L13.5 13.5"></path>
+        </svg>
+        <input type="text" placeholder="Search jobs, companies…" />
+        <span class="kbd">⌘K</span>
+      </div>
+
+      <button class="btn btn-icon" aria-label="Settings">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="8" r="1.75"></circle>
+          <path d="M13.5 8a5.5 5.5 0 0 0-.09-1l1.27-.98-1.5-2.6-1.5.56a5.5 5.5 0 0 0-1.74-1l-.23-1.58h-3l-.23 1.58a5.5 5.5 0 0 0-1.74 1l-1.5-.56-1.5 2.6 1.27.98a5.6 5.6 0 0 0 0 2l-1.27.98 1.5 2.6 1.5-.56a5.5 5.5 0 0 0 1.74 1l.23 1.58h3l.23-1.58a5.5 5.5 0 0 0 1.74-1l1.5.56 1.5-2.6-1.27-.98c.06-.33.09-.66.09-1z"></path>
+        </svg>
+      </button>
+
+      <button class="btn btn-primary">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+          <path d="M8 3v10M3 8h10"></path>
+        </svg>
+        New application
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ============ MAIN ============ -->
+<main>
+
+  <!-- Page header -->
+  <section class="page-head">
+    <div>
+      <h1 class="page-title">Companies</h1>
+      <p class="page-sub">
+        <strong>18</strong> companies
+        &nbsp;·&nbsp;
+        <strong>52</strong> total applications
+      </p>
+    </div>
+    <div style="display:flex; gap: 8px;">
+      <button class="btn btn-ghost">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3v8M5 8l3 3 3-3M3 13h10"></path>
+        </svg>
+        Export
+      </button>
+      <button class="btn btn-primary">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+          <path d="M8 3v10M3 8h10"></path>
+        </svg>
+        Add company
+      </button>
+    </div>
+  </section>
+
+  <!-- Summary band -->
+  <section class="summary">
+    <div class="sum-cell">
+      <div class="sum-label">Tracked</div>
+      <div class="sum-val">18</div>
+      <div class="sum-sub">+2 this month</div>
+    </div>
+    <div class="sum-cell">
+      <div class="sum-label">Active pipeline</div>
+      <div class="sum-val">11</div>
+      <div class="sum-sub">Companies with open apps</div>
+    </div>
+    <div class="sum-cell">
+      <div class="sum-label">In interview</div>
+      <div class="sum-val">04</div>
+      <div class="sum-sub">Across 6 roles</div>
+    </div>
+    <div class="sum-cell">
+      <div class="sum-label">Avg response</div>
+      <div class="sum-val">4.6d</div>
+      <div class="sum-sub">First reply after applying</div>
+    </div>
+  </section>
+
+  <!-- Toolbar -->
+  <section class="toolbar">
+    <div class="toolbar-search">
+      <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="7" cy="7" r="4.5"></circle>
+        <path d="M10.5 10.5L13.5 13.5"></path>
+      </svg>
+      <input type="text" placeholder="Search companies…" />
+    </div>
+
+    <div class="divider"></div>
+
+    <button class="sort-btn">
+      <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 5l3-3 3 3M6 2v12M13 11l-3 3-3-3M10 14V2"></path>
+      </svg>
+      Most recent activity
+      <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 6l4 4 4-4"></path>
+      </svg>
+    </button>
+
+    <button class="sort-btn">
+      <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 4h10M3 8h10M3 12h6"></path>
+        <circle cx="13" cy="12" r="1.25" fill="currentColor"></circle>
+      </svg>
+      Filter
+    </button>
+
+    <div style="margin-left: auto;" class="view-toggle">
+      <button class="view-btn is-active" aria-label="Grid view">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="2.5" y="2.5" width="4.5" height="4.5" rx=".5"></rect>
+          <rect x="9" y="2.5" width="4.5" height="4.5" rx=".5"></rect>
+          <rect x="2.5" y="9" width="4.5" height="4.5" rx=".5"></rect>
+          <rect x="9" y="9" width="4.5" height="4.5" rx=".5"></rect>
+        </svg>
+      </button>
+      <button class="view-btn" aria-label="List view">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <path d="M3 4h10M3 8h10M3 12h10"></path>
+        </svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- Company grid -->
+  <section class="grid">
+
+    <!-- Stripe -->
+    <a class="co-card" href="#">
+      <div class="co-top">
+        <div class="co-id">
+          <div class="co-avatar" style="background:#635bff; color:#fff;">S</div>
+          <div class="co-meta">
+            <div class="co-name">Stripe</div>
+            <div class="co-tag">Payments infrastructure · 8,000+</div>
+          </div>
+        </div>
+        <span class="co-action">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+        </span>
+      </div>
+
+      <div class="co-count-row">
+        <div><span class="co-count">04</span><span class="co-count-label">applications</span></div>
+        <span class="co-active-pill">2 active</span>
+      </div>
+
+      <div class="seg-bar">
+        <span class="seg-i" style="flex: 1"></span>
+        <span class="seg-a" style="flex: 1"></span>
+        <span class="seg-r" style="flex: 2"></span>
+      </div>
+      <div class="legend">
+        <span class="legend-item"><span class="swatch intv"></span>Interview <span class="n">1</span></span>
+        <span class="legend-item"><span class="swatch applied"></span>Applied <span class="n">1</span></span>
+        <span class="legend-item"><span class="swatch rej"></span>Rejected <span class="n">2</span></span>
+      </div>
+
+      <div class="co-foot">
+        <span class="chip">Last activity <strong style="margin-left: 4px;">today</strong></span>
+        <span class="chip">Deadline <span class="dot"></span> <strong style="color: #94352a;">tomorrow</strong></span>
+      </div>
+    </a>
+
+    <!-- Linear -->
+    <a class="co-card" href="#">
+      <div class="co-top">
+        <div class="co-id">
+          <div class="co-avatar" style="background:#0d0d0d; color:#fff;">L</div>
+          <div class="co-meta">
+            <div class="co-name">Linear</div>
+            <div class="co-tag">Project management · 50+</div>
+          </div>
+        </div>
+        <span class="co-action">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+        </span>
+      </div>
+
+      <div class="co-count-row">
+        <div><span class="co-count">03</span><span class="co-count-label">applications</span></div>
+        <span class="co-active-pill">2 active</span>
+      </div>
+
+      <div class="seg-bar">
+        <span class="seg-w" style="flex: 1"></span>
+        <span class="seg-a" style="flex: 1"></span>
+        <span class="seg-r" style="flex: 1"></span>
+      </div>
+      <div class="legend">
+        <span class="legend-item"><span class="swatch wish"></span>Wishlist <span class="n">1</span></span>
+        <span class="legend-item"><span class="swatch applied"></span>Applied <span class="n">1</span></span>
+        <span class="legend-item"><span class="swatch rej"></span>Rejected <span class="n">1</span></span>
+      </div>
+
+      <div class="co-foot">
+        <span class="chip">Last activity <strong style="margin-left: 4px;">2 days ago</strong></span>
+        <span class="chip">Deadline <span class="dot"></span> <strong>in 2 days</strong></span>
+      </div>
+    </a>
+
+    <!-- Figma -->
+    <a class="co-card" href="#">
+      <div class="co-top">
+        <div class="co-id">
+          <div class="co-avatar" style="background:#fef2ee; color:#dc4a26; border: 1px solid #fbd9cc;">F</div>
+          <div class="co-meta">
+            <div class="co-name">Figma</div>
+            <div class="co-tag">Design tools · 1,500+</div>
+          </div>
+        </div>
+        <span class="co-action">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+        </span>
+      </div>
+
+      <div class="co-count-row">
+        <div><span class="co-count">02</span><span class="co-count-label">applications</span></div>
+        <span class="co-active-pill">2 active</span>
+      </div>
+
+      <div class="seg-bar">
+        <span class="seg-a" style="flex: 1"></span>
+        <span class="seg-i" style="flex: 1"></span>
+      </div>
+      <div class="legend">
+        <span class="legend-item"><span class="swatch applied"></span>Applied <span class="n">1</span></span>
+        <span class="legend-item"><span class="swatch intv"></span>Interview <span class="n">1</span></span>
+      </div>
+
+      <div class="co-foot">
+        <span class="chip">Last activity <strong style="margin-left: 4px;">yesterday</strong></span>
+        <span class="chip">Deadline <span class="dot"></span> <strong>in 3 days</strong></span>
+      </div>
+    </a>
+
+    <!-- Vercel -->
+    <a class="co-card" href="#">
+      <div class="co-top">
+        <div class="co-id">
+          <div class="co-avatar" style="background:#0d0d0d; color:#fff;">V</div>
+          <div class="co-meta">
+            <div class="co-name">Vercel</div>
+            <div class="co-tag">Frontend cloud · 600+</div>
+          </div>
+        </div>
+        <span class="co-action">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+        </span>
+      </div>
+
+      <div class="co-count-row">
+        <div><span class="co-count">02</span><span class="co-count-label">applications</span></div>
+        <span class="co-active-pill">1 active</span>
+      </div>
+
+      <div class="seg-bar">
+        <span class="seg-i" style="flex: 1"></span>
+        <span class="seg-r" style="flex: 1"></span>
+      </div>
+      <div class="legend">
+        <span class="legend-item"><span class="swatch intv"></span>Interview <span class="n">1</span></span>
+        <span class="legend-item"><span class="swatch rej"></span>Rejected <span class="n">1</span></span>
+      </div>
+
+      <div class="co-foot">
+        <span class="chip">Last activity <strong style="margin-left: 4px;">3 days ago</strong></span>
+        <span class="chip">Interview <span class="dot"></span> <strong>Fri</strong></span>
+      </div>
+    </a>
+
+    <!-- Anthropic -->
+    <a class="co-card" href="#">
+      <div class="co-top">
+        <div class="co-id">
+          <div class="co-avatar" style="background:#f5f3ee; color:#c96442; border: 1px solid #ece6d8;">A</div>
+          <div class="co-meta">
+            <div class="co-name">Anthropic</div>
+            <div class="co-tag">AI research · 800+</div>
+          </div>
+        </div>
+        <span class="co-action">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+        </span>
+      </div>
+
+      <div class="co-count-row">
+        <div><span class="co-count">02</span><span class="co-count-label">applications</span></div>
+        <span class="co-active-pill">2 active</span>
+      </div>
+
+      <div class="seg-bar">
+        <span class="seg-i" style="flex: 1"></span>
+        <span class="seg-a" style="flex: 1"></span>
+      </div>
+      <div class="legend">
+        <span class="legend-item"><span class="swatch intv"></span>Interview <span class="n">1</span></span>
+        <span class="legend-item"><span class="swatch applied"></span>Applied <span class="n">1</span></span>
+      </div>
+
+      <div class="co-foot">
+        <span class="chip">Last activity <strong style="margin-left: 4px;">today</strong></span>
+        <span class="chip">Final round <span class="dot"></span> <strong>Mon</strong></span>
+      </div>
+    </a>
+
+    <!-- Notion -->
+    <a class="co-card" href="#">
+      <div class="co-top">
+        <div class="co-id">
+          <div class="co-avatar" style="background:#fff; color:#1a1a1a; border:1px solid #e5e5e5;">N</div>
+          <div class="co-meta">
+            <div class="co-name">Notion</div>
+            <div class="co-tag">Productivity · 800+</div>
+          </div>
+        </div>
+        <span class="co-action">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+        </span>
+      </div>
+
+      <div class="co-count-row">
+        <div><span class="co-count">03</span><span class="co-count-label">applications</span></div>
+        <span class="co-active-pill">1 active</span>
+      </div>
+
+      <div class="seg-bar">
+        <span class="seg-i" style="flex: 1"></span>
+        <span class="seg-r" style="flex: 2"></span>
+      </div>
+      <div class="legend">
+        <span class="legend-item"><span class="swatch intv"></span>Interview <span class="n">1</span></span>
+        <span class="legend-item"><span class="swatch rej"></span>Rejected <span class="n">2</span></span>
+      </div>
+
+      <div class="co-foot">
+        <span class="chip">Last activity <strong style="margin-left: 4px;">today</strong></span>
+        <span class="chip">Interview <span class="dot"></span> <strong>Wed</strong></span>
+      </div>
+    </a>
+
+    <!-- Ramp -->
+    <a class="co-card" href="#">
+      <div class="co-top">
+        <div class="co-id">
+          <div class="co-avatar" style="background:#eef9f1; color:#1e7a4a; border: 1px solid #cfead8;">R</div>
+          <div class="co-meta">
+            <div class="co-name">Ramp</div>
+            <div class="co-tag">Finance ops · 900+</div>
+          </div>
+        </div>
+        <span class="co-action">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+        </span>
+      </div>
+
+      <div class="co-count-row">
+        <div><span class="co-count">02</span><span class="co-count-label">applications</span></div>
+        <span class="co-active-pill">1 active</span>
+      </div>
+
+      <div class="seg-bar">
+        <span class="seg-a" style="flex: 1"></span>
+        <span class="seg-r" style="flex: 1"></span>
+      </div>
+      <div class="legend">
+        <span class="legend-item"><span class="swatch applied"></span>Applied <span class="n">1</span></span>
+        <span class="legend-item"><span class="swatch rej"></span>Rejected <span class="n">1</span></span>
+      </div>
+
+      <div class="co-foot">
+        <span class="chip">Last activity <strong style="margin-left: 4px;">5 days ago</strong></span>
+        <span class="chip">Deadline <span class="dot"></span> <strong>May 28</strong></span>
+      </div>
+    </a>
+
+    <!-- Airtable -->
+    <a class="co-card" href="#">
+      <div class="co-top">
+        <div class="co-id">
+          <div class="co-avatar" style="background:#fff7e6; color:#b88416; border: 1px solid #f0e4c5;">A</div>
+          <div class="co-meta">
+            <div class="co-name">Airtable</div>
+            <div class="co-tag">Database tools · 700+</div>
+          </div>
+        </div>
+        <span class="co-action">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+        </span>
+      </div>
+
+      <div class="co-count-row">
+        <div><span class="co-count">01</span><span class="co-count-label">application</span></div>
+        <span class="co-active-pill" style="background: #e3f3e9; color: #2f8a5c;">Offer</span>
+      </div>
+
+      <div class="seg-bar">
+        <span class="seg-o" style="flex: 1"></span>
+      </div>
+      <div class="legend">
+        <span class="legend-item"><span class="swatch offer"></span>Offer <span class="n">1</span></span>
+      </div>
+
+      <div class="co-foot">
+        <span class="chip">Last activity <strong style="margin-left: 4px;">yesterday</strong></span>
+        <span class="chip">Decision <span class="dot"></span> <strong>by Jun 05</strong></span>
+      </div>
+    </a>
+
+    <!-- Retool -->
+    <a class="co-card" href="#">
+      <div class="co-top">
+        <div class="co-id">
+          <div class="co-avatar" style="background:#f1eefd; color:#5b3fcc; border: 1px solid #dfd6f7;">R</div>
+          <div class="co-meta">
+            <div class="co-name">Retool</div>
+            <div class="co-tag">Internal tools · 500+</div>
+          </div>
+        </div>
+        <span class="co-action">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+        </span>
+      </div>
+
+      <div class="co-count-row">
+        <div><span class="co-count">02</span><span class="co-count-label">applications</span></div>
+        <span class="co-active-pill">2 active</span>
+      </div>
+
+      <div class="seg-bar">
+        <span class="seg-w" style="flex: 1"></span>
+        <span class="seg-a" style="flex: 1"></span>
+      </div>
+      <div class="legend">
+        <span class="legend-item"><span class="swatch wish"></span>Wishlist <span class="n">1</span></span>
+        <span class="legend-item"><span class="swatch applied"></span>Applied <span class="n">1</span></span>
+      </div>
+
+      <div class="co-foot">
+        <span class="chip">Last activity <strong style="margin-left: 4px;">1 week ago</strong></span>
+        <span class="chip">Deadline <span class="dot"></span> <strong>Jun 01</strong></span>
+      </div>
+    </a>
+
+    <!-- Datadog -->
+    <a class="co-card" href="#">
+      <div class="co-top">
+        <div class="co-id">
+          <div class="co-avatar" style="background:#6f3bcc; color:#fff;">D</div>
+          <div class="co-meta">
+            <div class="co-name">Datadog</div>
+            <div class="co-tag">Observability · 5,000+</div>
+          </div>
+        </div>
+        <span class="co-action">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+        </span>
+      </div>
+
+      <div class="co-count-row">
+        <div><span class="co-count">01</span><span class="co-count-label">application</span></div>
+        <span class="co-active-pill" style="background:#fbeae6; color:#94352a;">Closed</span>
+      </div>
+
+      <div class="seg-bar">
+        <span class="seg-r" style="flex: 1"></span>
+      </div>
+      <div class="legend">
+        <span class="legend-item"><span class="swatch rej"></span>Rejected <span class="n">1</span></span>
+      </div>
+
+      <div class="co-foot">
+        <span class="chip">Last activity <strong style="margin-left: 4px;">3 weeks ago</strong></span>
+        <span class="chip">Apr 02</span>
+      </div>
+    </a>
+
+    <!-- Plaid -->
+    <a class="co-card" href="#">
+      <div class="co-top">
+        <div class="co-id">
+          <div class="co-avatar" style="background:#f6f5fc; color:#231f51; border: 1px solid #e6e3f5;">P</div>
+          <div class="co-meta">
+            <div class="co-name">Plaid</div>
+            <div class="co-tag">Financial APIs · 1,200+</div>
+          </div>
+        </div>
+        <span class="co-action">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+        </span>
+      </div>
+
+      <div class="co-count-row">
+        <div><span class="co-count">02</span><span class="co-count-label">applications</span></div>
+        <span class="co-active-pill">1 active</span>
+      </div>
+
+      <div class="seg-bar">
+        <span class="seg-w" style="flex: 1"></span>
+        <span class="seg-r" style="flex: 1"></span>
+      </div>
+      <div class="legend">
+        <span class="legend-item"><span class="swatch wish"></span>Wishlist <span class="n">1</span></span>
+        <span class="legend-item"><span class="swatch rej"></span>Rejected <span class="n">1</span></span>
+      </div>
+
+      <div class="co-foot">
+        <span class="chip">Last activity <strong style="margin-left: 4px;">1 week ago</strong></span>
+        <span class="chip">Saved</span>
+      </div>
+    </a>
+
+    <!-- Add card -->
+    <button class="add-card">
+      <div class="add-icon">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+          <path d="M8 3v10M3 8h10"></path>
+        </svg>
+      </div>
+      <div>
+        <div class="add-title">Add a company</div>
+        <div class="add-sub">Track it before applying</div>
+      </div>
+    </button>
+
+  </section>
+
+</main>
+
+</body>
+</html>

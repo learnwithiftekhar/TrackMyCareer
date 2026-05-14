@@ -24,7 +24,8 @@ TrackMyCareer is a single-user personal job application tracker. No authenticati
 ```
 TrackMyCareer/
 ├── server/           # Spring Boot Maven project
-└── frontend/         # React + Vite + TypeScript app
+├── frontend/         # React + Vite + TypeScript app
+└── UI Designs/       # Static HTML mockups for each page/screen
 ```
 
 ## Backend Commands
@@ -80,6 +81,20 @@ Services always use `HttpStatus.NOT_FOUND` (404) for missing entities, never `BA
 - `src/api/` — all fetch calls to the backend, one file per resource
 
 The frontend calls the backend at `http://localhost:8080/api`.
+
+### UI Designs
+Static HTML mockups live in `UI Designs/`. **Always consult the relevant file before building or modifying a page or component** — these are the source of truth for layout, styling, and UX.
+
+| File | Screen |
+|---|---|
+| `Dashboard.html` | Main dashboard |
+| `All Jobs.html` | Paginated job list |
+| `Job Detail.html` | Job detail / edit view |
+| `New Application.html` | Create new job application |
+| `Interviews.html` | Interviews list |
+| `New Interview.html` | Create new interview |
+| `Companies.html` | Companies list |
+| `Add Company Modal.html` | Add company modal |
 
 ## Data Model
 

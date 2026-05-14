@@ -1,0 +1,955 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280" />
+<title>TrackMyJob — Interviews</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:        #f7f5f0;
+    --surface:   #ffffff;
+    --surface-2: #fbfaf6;
+    --border:    #ece8dd;
+    --border-strong: #ddd7c7;
+    --ink:       #1f1d1a;
+    --ink-2:     #4b4843;
+    --muted:     #8c887e;
+    --muted-2:   #b3afa3;
+
+    --accent:    #4f46e5;
+    --accent-soft: #eef0ff;
+    --accent-ink:  #3730a3;
+
+    --wish:    #9c8d6d;
+    --applied: #4f46e5;
+    --intv:    #b8854a;
+    --offer:   #2f8a5c;
+    --rej:     #b04a3f;
+
+    --radius:    14px;
+    --radius-sm: 10px;
+    --shadow-soft: 0 1px 0 rgba(31,29,26,.02), 0 1px 2px rgba(31,29,26,.03);
+
+    --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  /* ---------- Top nav ---------- */
+  .nav {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(247, 245, 240, 0.85);
+    backdrop-filter: saturate(140%) blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    max-width: 1180px; margin: 0 auto;
+    padding: 14px 32px;
+    display: flex; align-items: center; gap: 36px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
+  .brand-mark {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: var(--ink); color: var(--bg);
+    display: grid; place-items: center;
+    font-family: var(--font-mono); font-size: 12px; font-weight: 500;
+  }
+  .nav-links { display: flex; align-items: center; gap: 4px; }
+  .nav-link {
+    padding: 7px 12px; border-radius: 8px;
+    font-size: 13.5px; color: var(--ink-2); text-decoration: none;
+    transition: background .15s ease, color .15s ease;
+  }
+  .nav-link:hover { background: rgba(31,29,26,.04); color: var(--ink); }
+  .nav-link.is-active { color: var(--ink); background: rgba(31,29,26,.05); }
+  .nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 14px; border-radius: 9px;
+    font-size: 13.5px; font-weight: 500; font-family: inherit;
+    border: 1px solid transparent; cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, transform .05s ease;
+    line-height: 1; text-decoration: none;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--ink); color: var(--bg); }
+  .btn-primary:hover { background: #2d2a26; }
+  .btn-ghost {
+    background: transparent; color: var(--ink-2);
+    border-color: var(--border-strong);
+  }
+  .btn-ghost:hover { background: var(--surface); color: var(--ink); }
+  .btn-icon {
+    width: 34px; height: 34px; padding: 0; justify-content: center;
+    background: transparent; border: 1px solid var(--border-strong);
+    color: var(--ink-2); border-radius: 9px;
+  }
+  .btn-icon:hover { background: var(--surface); color: var(--ink); }
+
+  /* Search */
+  .search { position: relative; width: 240px; }
+  .search input {
+    width: 100%;
+    padding: 8px 12px 8px 32px;
+    background: var(--surface); border: 1px solid var(--border-strong);
+    border-radius: 9px; font-family: inherit; font-size: 13px;
+    color: var(--ink); outline: none;
+  }
+  .search input::placeholder { color: var(--muted-2); }
+  .search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,.10); }
+  .search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted-2); }
+  .kbd {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    font-family: var(--font-mono); font-size: 11px; color: var(--muted);
+    background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px;
+  }
+
+  /* ---------- Shell ---------- */
+  main {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 44px 32px 80px;
+  }
+  .page-head {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 24px; margin-bottom: 28px;
+  }
+  .page-title { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 4px; }
+  .page-sub { color: var(--muted); font-size: 14px; margin: 0; }
+  .page-sub strong { color: var(--ink-2); font-weight: 500; }
+
+  /* ---------- Toolbar ---------- */
+  .toolbar {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .seg-toggle {
+    display: inline-flex;
+    padding: 3px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    gap: 2px;
+  }
+  .seg-toggle button {
+    padding: 6px 14px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .seg-toggle button:hover { color: var(--ink-2); }
+  .seg-toggle button.is-active {
+    background: var(--bg);
+    color: var(--ink);
+  }
+  .seg-toggle .count {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--bg);
+    padding: 1px 5px;
+    border-radius: 5px;
+  }
+  .seg-toggle .is-active .count {
+    background: var(--surface);
+    color: var(--ink-2);
+  }
+
+  .toolbar-search {
+    position: relative; flex: 1; max-width: 320px; min-width: 220px;
+  }
+  .toolbar-search input {
+    width: 100%; padding: 9px 14px 9px 36px;
+    background: var(--surface); border: 1px solid var(--border-strong);
+    border-radius: 10px; font-family: inherit; font-size: 13.5px;
+    color: var(--ink); outline: none;
+  }
+  .toolbar-search input::placeholder { color: var(--muted-2); }
+  .toolbar-search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,.10); }
+  .toolbar-search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted-2); }
+
+  .view-toggle {
+    display: inline-flex;
+    margin-left: auto;
+    padding: 3px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    gap: 2px;
+  }
+  .view-toggle button {
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 7px;
+    border: none; background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .view-toggle button:hover { color: var(--ink-2); }
+  .view-toggle button.is-active {
+    background: var(--bg);
+    color: var(--ink);
+  }
+
+  /* ---------- Up-next callout ---------- */
+  .next-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-soft);
+    padding: 22px 24px;
+    margin-bottom: 36px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 24px;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .next-card::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--intv);
+  }
+  .next-time {
+    text-align: center;
+    padding-right: 24px;
+    border-right: 1px solid var(--border);
+    min-width: 110px;
+  }
+  .next-when {
+    font-size: 11px;
+    color: var(--intv);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .next-clock {
+    font-family: var(--font-mono);
+    font-size: 30px;
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    color: var(--ink);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .next-day {
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+
+  .next-body {
+    min-width: 0;
+  }
+  .next-meta {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .next-meta strong { color: var(--ink-2); font-weight: 500; }
+  .next-meta .pipe { color: var(--muted-2); }
+  .next-title {
+    font-size: 18px; font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    margin: 0 0 8px;
+    line-height: 1.3;
+  }
+  .next-people {
+    font-size: 13px;
+    color: var(--muted);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .next-people .av-tiny {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    display: inline-grid; place-items: center;
+    font-size: 10px; font-weight: 600;
+    color: #fff;
+  }
+  .next-actions {
+    display: flex; flex-direction: column; gap: 8px;
+    align-items: stretch;
+    min-width: 140px;
+  }
+
+  /* ---------- Day group ---------- */
+  .day {
+    margin-bottom: 28px;
+  }
+  .day-head {
+    display: flex; align-items: baseline; gap: 12px;
+    margin-bottom: 12px;
+    padding: 0 4px;
+  }
+  .day-label {
+    font-size: 11.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+  }
+  .day-label.is-today { color: var(--intv); }
+  .day-date {
+    font-size: 13px;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .day-rel {
+    font-size: 12px;
+    color: var(--muted);
+    margin-left: auto;
+    font-family: var(--font-mono);
+  }
+
+  .day-list {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+  }
+  .iv-row {
+    display: grid;
+    grid-template-columns: 86px 36px 1fr auto;
+    gap: 16px;
+    padding: 16px 20px;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    transition: background .12s ease;
+    cursor: default;
+  }
+  .iv-row:last-child { border-bottom: none; }
+  .iv-row:hover { background: var(--surface-2); }
+  .iv-row.is-past .iv-title,
+  .iv-row.is-past .iv-time-main,
+  .iv-row.is-past .iv-role {
+    color: var(--muted);
+  }
+  .iv-row.is-past .av {
+    opacity: 0.7;
+  }
+
+  .iv-time {
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .iv-time-main {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .iv-time-sub {
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+
+  .av {
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    display: grid; place-items: center;
+    font-size: 13px; font-weight: 600;
+    letter-spacing: -0.01em;
+    flex-shrink: 0;
+  }
+
+  .iv-main { min-width: 0; }
+  .iv-title {
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.3;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .iv-role {
+    font-size: 12.5px;
+    color: var(--muted);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .iv-role .pipe { color: var(--muted-2); }
+  .iv-role .av-tiny {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    display: inline-grid; place-items: center;
+    font-size: 9px; font-weight: 600;
+    color: #fff;
+    margin-right: 4px;
+  }
+
+  .iv-right {
+    display: flex; align-items: center; gap: 12px;
+    flex-shrink: 0;
+  }
+  .stack-avs {
+    display: inline-flex;
+  }
+  .stack-avs .av-tiny {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: inline-grid; place-items: center;
+    font-size: 10px; font-weight: 600;
+    color: #fff;
+    border: 2px solid var(--surface);
+    margin-left: -6px;
+  }
+  .stack-avs .av-tiny:first-child { margin-left: 0; }
+  .iv-row:hover .stack-avs .av-tiny { border-color: var(--surface-2); }
+
+  /* Type pill */
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 500;
+    line-height: 1.4;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--ink-2);
+  }
+  .pill .pill-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+  }
+  .pill.is-screen    .pill-dot { background: #8c887e; }
+  .pill.is-technical .pill-dot { background: var(--applied); }
+  .pill.is-design    .pill-dot { background: var(--intv); }
+  .pill.is-system    .pill-dot { background: #6f3bcc; }
+  .pill.is-onsite    .pill-dot { background: var(--offer); }
+  .pill.is-hm        .pill-dot { background: #b04a3f; }
+
+  .pill.is-status-next {
+    color: var(--intv);
+    background: #fdf5e9;
+    border-color: #f3e4c2;
+  }
+  .pill.is-status-done {
+    color: var(--muted);
+  }
+
+  .row-actions {
+    color: var(--muted-2);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    display: inline-flex;
+  }
+  .row-actions:hover { background: var(--bg); color: var(--ink-2); }
+
+  /* Past collapse footer */
+  .past-note {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12.5px;
+    padding: 14px 12px;
+    border-top: 1px solid var(--border);
+  }
+  .past-note a {
+    color: var(--ink-2);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .past-note a:hover { color: var(--ink); text-decoration: underline; }
+
+  .icon { width: 14px; height: 14px; }
+  .icon-sm { width: 12px; height: 12px; }
+</style>
+</head>
+<body>
+
+<!-- ============ TOP NAV ============ -->
+<header class="nav">
+  <div class="nav-inner">
+    <div class="brand">
+      <div class="brand-mark">T</div>
+      <span>TrackMyJob</span>
+    </div>
+
+    <nav class="nav-links">
+      <a class="nav-link" href="Dashboard.html">Dashboard</a>
+      <a class="nav-link" href="All Jobs.html">All Jobs</a>
+      <a class="nav-link" href="Companies.html">Companies</a>
+      <a class="nav-link is-active" href="#">Interviews</a>
+      <a class="nav-link" href="#">Notes</a>
+    </nav>
+
+    <div class="nav-right">
+      <div class="search">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="7" cy="7" r="4.5"></circle>
+          <path d="M10.5 10.5L13.5 13.5"></path>
+        </svg>
+        <input type="text" placeholder="Search jobs, companies…" />
+        <span class="kbd">⌘K</span>
+      </div>
+
+      <button class="btn btn-icon" aria-label="Settings">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="8" r="1.75"></circle>
+          <path d="M13.5 8a5.5 5.5 0 0 0-.09-1l1.27-.98-1.5-2.6-1.5.56a5.5 5.5 0 0 0-1.74-1l-.23-1.58h-3l-.23 1.58a5.5 5.5 0 0 0-1.74 1l-1.5-.56-1.5 2.6 1.27.98a5.6 5.6 0 0 0 0 2l-1.27.98 1.5 2.6 1.5-.56a5.5 5.5 0 0 0 1.74 1l.23 1.58h3l.23-1.58a5.5 5.5 0 0 0 1.74-1l1.5.56 1.5-2.6-1.27-.98c.06-.33.09-.66.09-1z"></path>
+        </svg>
+      </button>
+
+      <button class="btn btn-primary">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+          <path d="M8 3v10M3 8h10"></path>
+        </svg>
+        New application
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ============ MAIN ============ -->
+<main>
+
+  <!-- Page header -->
+  <section class="page-head">
+    <div>
+      <h1 class="page-title">Interviews</h1>
+      <p class="page-sub">
+        <strong>6</strong> upcoming
+        &nbsp;·&nbsp;
+        <strong>14</strong> completed all-time
+      </p>
+    </div>
+    <div style="display:flex; gap: 8px;">
+      <button class="btn btn-ghost">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 8a5 5 0 0 1 8-4M13 8a5 5 0 0 1-8 4M11 3h2v2M5 13H3v-2"></path>
+        </svg>
+        Sync calendar
+      </button>
+      <button class="btn btn-ghost">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+          <path d="M8 3v10M3 8h10"></path>
+        </svg>
+        Schedule interview
+      </button>
+    </div>
+  </section>
+
+  <!-- Up next callout -->
+  <section class="next-card">
+    <div class="next-time">
+      <div class="next-when">Up next · in 18 hours</div>
+      <div class="next-clock">10:00</div>
+      <div class="next-day">Tomorrow · 60 min</div>
+    </div>
+    <div class="next-body">
+      <div class="next-meta">
+        <span style="display:inline-flex; align-items:center; gap: 6px;">
+          <span class="av av-tiny" style="background:#635bff; width: 16px; height: 16px; border-radius: 50%;">S</span>
+          <strong>Stripe</strong>
+        </span>
+        <span class="pipe">·</span>
+        <span>Senior Software Engineer, Platform</span>
+        <span class="pipe">·</span>
+        <span class="pill is-system"><span class="pill-dot"></span>System Design</span>
+      </div>
+      <h3 class="next-title">Technical Round 2 — System Design</h3>
+      <div class="next-people">
+        <span class="av-tiny" style="background:#635bff;">PM</span>
+        <span>With Priya Menon (Staff) · Google Meet</span>
+      </div>
+    </div>
+    <div class="next-actions">
+      <button class="btn btn-primary" style="justify-content:center;">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 9l2-2a2.5 2.5 0 0 1 3.5 3.5l-2 2a2.5 2.5 0 0 1-3.5 0"></path>
+          <path d="M9 7l-2 2a2.5 2.5 0 0 1-3.5-3.5l2-2a2.5 2.5 0 0 1 3.5 0"></path>
+        </svg>
+        Join meeting
+      </button>
+      <a class="btn btn-ghost" href="Job Detail.html" style="justify-content:center;">View prep</a>
+    </div>
+  </section>
+
+  <!-- Toolbar -->
+  <section class="toolbar">
+    <div class="seg-toggle">
+      <button class="is-active">Upcoming <span class="count">6</span></button>
+      <button>Past <span class="count">14</span></button>
+      <button>All <span class="count">20</span></button>
+    </div>
+
+    <div class="toolbar-search">
+      <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="7" cy="7" r="4.5"></circle>
+        <path d="M10.5 10.5L13.5 13.5"></path>
+      </svg>
+      <input type="text" placeholder="Search interviews…" />
+    </div>
+
+    <div class="view-toggle">
+      <button class="is-active">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <path d="M3 4h10M3 8h10M3 12h10"></path>
+        </svg>
+        List
+      </button>
+      <button>
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="2.5" y="3" width="11" height="10" rx="1.5"></rect>
+          <path d="M2.5 6.5h11M6 2v2M10 2v2"></path>
+        </svg>
+        Calendar
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ DAY GROUPS ============ -->
+
+  <!-- TODAY -->
+  <section class="day">
+    <header class="day-head">
+      <span class="day-label is-today">Today</span>
+      <span class="day-date">Thu, May 14</span>
+      <span class="day-rel">1 interview</span>
+    </header>
+    <div class="day-list">
+      <div class="iv-row">
+        <div class="iv-time">
+          <span class="iv-time-main">3:00 PM</span>
+          <span class="iv-time-sub">45 min</span>
+        </div>
+        <div class="av" style="background:#0d0d0d; color:#fff;">V</div>
+        <div class="iv-main">
+          <div class="iv-title">
+            Phone Screen
+            <span class="pill is-status-next">Today</span>
+          </div>
+          <div class="iv-role">
+            <span><span class="av-tiny" style="background:#0d0d0d;">V</span>Vercel</span>
+            <span class="pipe">·</span>
+            <span>Staff Engineer, Edge</span>
+            <span class="pipe">·</span>
+            <span class="pill is-screen"><span class="pill-dot"></span>Recruiter screen</span>
+          </div>
+        </div>
+        <div class="iv-right">
+          <div class="stack-avs">
+            <span class="av-tiny" style="background:#7a6cff;">JK</span>
+          </div>
+          <span class="row-actions">
+            <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOMORROW -->
+  <section class="day">
+    <header class="day-head">
+      <span class="day-label">Tomorrow</span>
+      <span class="day-date">Fri, May 15</span>
+      <span class="day-rel">2 interviews</span>
+    </header>
+    <div class="day-list">
+
+      <div class="iv-row">
+        <div class="iv-time">
+          <span class="iv-time-main">10:00 AM</span>
+          <span class="iv-time-sub">60 min</span>
+        </div>
+        <div class="av" style="background:#635bff; color:#fff;">S</div>
+        <div class="iv-main">
+          <div class="iv-title">Technical Round 2 — System Design</div>
+          <div class="iv-role">
+            <span><span class="av-tiny" style="background:#635bff;">S</span>Stripe</span>
+            <span class="pipe">·</span>
+            <span>Senior Software Engineer, Platform</span>
+            <span class="pipe">·</span>
+            <span class="pill is-system"><span class="pill-dot"></span>System Design</span>
+          </div>
+        </div>
+        <div class="iv-right">
+          <div class="stack-avs">
+            <span class="av-tiny" style="background:#635bff;">PM</span>
+            <span class="av-tiny" style="background:#0d0d0d;">DR</span>
+          </div>
+          <span class="row-actions">
+            <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+          </span>
+        </div>
+      </div>
+
+      <div class="iv-row">
+        <div class="iv-time">
+          <span class="iv-time-main">2:30 PM</span>
+          <span class="iv-time-sub">30 min</span>
+        </div>
+        <div class="av" style="background:#fef2ee; color:#dc4a26; border: 1px solid #fbd9cc;">F</div>
+        <div class="iv-main">
+          <div class="iv-title">Portfolio Review</div>
+          <div class="iv-role">
+            <span><span class="av-tiny" style="background:#dc4a26;">F</span>Figma</span>
+            <span class="pipe">·</span>
+            <span>Product Designer, Platform</span>
+            <span class="pipe">·</span>
+            <span class="pill is-design"><span class="pill-dot"></span>Portfolio review</span>
+          </div>
+        </div>
+        <div class="iv-right">
+          <div class="stack-avs">
+            <span class="av-tiny" style="background:#dc4a26;">LT</span>
+          </div>
+          <span class="row-actions">
+            <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+          </span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- THIS WEEK -->
+  <section class="day">
+    <header class="day-head">
+      <span class="day-label">Mon, May 18</span>
+      <span class="day-date">Final round · all-day</span>
+      <span class="day-rel">In 4 days</span>
+    </header>
+    <div class="day-list">
+
+      <div class="iv-row">
+        <div class="iv-time">
+          <span class="iv-time-main">11:00 AM</span>
+          <span class="iv-time-sub">4 sessions · 4h</span>
+        </div>
+        <div class="av" style="background:#f5f3ee; color:#c96442; border: 1px solid #ece6d8;">A</div>
+        <div class="iv-main">
+          <div class="iv-title">
+            Final Round — Onsite (Virtual)
+            <span class="pill" style="background:#eef0ff; border-color:#d6daff; color:var(--accent-ink);">Decision round</span>
+          </div>
+          <div class="iv-role">
+            <span><span class="av-tiny" style="background:#c96442;">A</span>Anthropic</span>
+            <span class="pipe">·</span>
+            <span>Product Engineer</span>
+            <span class="pipe">·</span>
+            <span class="pill is-onsite"><span class="pill-dot"></span>Onsite</span>
+          </div>
+        </div>
+        <div class="iv-right">
+          <div class="stack-avs">
+            <span class="av-tiny" style="background:#c96442;">RS</span>
+            <span class="av-tiny" style="background:#635bff;">EW</span>
+            <span class="av-tiny" style="background:#0d0d0d;">+2</span>
+          </div>
+          <span class="row-actions">
+            <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+          </span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Later -->
+  <section class="day">
+    <header class="day-head">
+      <span class="day-label">Next week</span>
+      <span class="day-date">May 20–24</span>
+      <span class="day-rel">2 interviews</span>
+    </header>
+    <div class="day-list">
+
+      <div class="iv-row">
+        <div class="iv-time">
+          <span class="iv-time-main">9:30 AM</span>
+          <span class="iv-time-sub">Wed · 45 min</span>
+        </div>
+        <div class="av" style="background:#fff; color:#1a1a1a; border:1px solid #e5e5e5;">N</div>
+        <div class="iv-main">
+          <div class="iv-title">Hiring Manager Round</div>
+          <div class="iv-role">
+            <span><span class="av-tiny" style="background:#1a1a1a;">N</span>Notion</span>
+            <span class="pipe">·</span>
+            <span>Senior Product Designer</span>
+            <span class="pipe">·</span>
+            <span class="pill is-hm"><span class="pill-dot"></span>Hiring manager</span>
+          </div>
+        </div>
+        <div class="iv-right">
+          <div class="stack-avs">
+            <span class="av-tiny" style="background:#1a1a1a;">AC</span>
+          </div>
+          <span class="row-actions">
+            <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+          </span>
+        </div>
+      </div>
+
+      <div class="iv-row">
+        <div class="iv-time">
+          <span class="iv-time-main">1:00 PM</span>
+          <span class="iv-time-sub">Fri · 60 min</span>
+        </div>
+        <div class="av" style="background:#635bff; color:#fff;">S</div>
+        <div class="iv-main">
+          <div class="iv-title">Technical Round 3 — Domain Deep Dive</div>
+          <div class="iv-role">
+            <span><span class="av-tiny" style="background:#635bff;">S</span>Stripe</span>
+            <span class="pipe">·</span>
+            <span>Senior Software Engineer, Platform</span>
+            <span class="pipe">·</span>
+            <span class="pill is-technical"><span class="pill-dot"></span>Technical</span>
+          </div>
+        </div>
+        <div class="iv-right">
+          <div class="stack-avs">
+            <span class="av-tiny" style="background:#635bff;">KJ</span>
+            <span class="av-tiny" style="background:#0d0d0d;">MN</span>
+          </div>
+          <span class="row-actions">
+            <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+          </span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- RECENTLY COMPLETED (a glance back) -->
+  <section class="day">
+    <header class="day-head">
+      <span class="day-label">Recently completed</span>
+      <span class="day-date">Last 7 days</span>
+      <span class="day-rel">3 interviews</span>
+    </header>
+    <div class="day-list">
+
+      <div class="iv-row is-past">
+        <div class="iv-time">
+          <span class="iv-time-main">May 10</span>
+          <span class="iv-time-sub">60 min</span>
+        </div>
+        <div class="av" style="background:#635bff; color:#fff;">S</div>
+        <div class="iv-main">
+          <div class="iv-title">
+            Technical Round 1 — Coding
+            <span class="pill is-status-done">Done</span>
+          </div>
+          <div class="iv-role">
+            <span><span class="av-tiny" style="background:#635bff;">S</span>Stripe</span>
+            <span class="pipe">·</span>
+            <span>Senior Software Engineer, Platform</span>
+            <span class="pipe">·</span>
+            <span class="pill is-technical"><span class="pill-dot"></span>Technical</span>
+          </div>
+        </div>
+        <div class="iv-right">
+          <div class="stack-avs">
+            <span class="av-tiny" style="background:#635bff;">TG</span>
+          </div>
+          <span class="row-actions">
+            <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+          </span>
+        </div>
+      </div>
+
+      <div class="iv-row is-past">
+        <div class="iv-time">
+          <span class="iv-time-main">May 08</span>
+          <span class="iv-time-sub">45 min</span>
+        </div>
+        <div class="av" style="background:#0d0d0d; color:#fff;">L</div>
+        <div class="iv-main">
+          <div class="iv-title">
+            Recruiter Screen
+            <span class="pill is-status-done">Done</span>
+          </div>
+          <div class="iv-role">
+            <span><span class="av-tiny" style="background:#0d0d0d;">L</span>Linear</span>
+            <span class="pipe">·</span>
+            <span>Senior Frontend Engineer</span>
+            <span class="pipe">·</span>
+            <span class="pill is-screen"><span class="pill-dot"></span>Recruiter screen</span>
+          </div>
+        </div>
+        <div class="iv-right">
+          <div class="stack-avs">
+            <span class="av-tiny" style="background:#0d0d0d;">EM</span>
+          </div>
+          <span class="row-actions">
+            <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+          </span>
+        </div>
+      </div>
+
+      <div class="iv-row is-past">
+        <div class="iv-time">
+          <span class="iv-time-main">May 06</span>
+          <span class="iv-time-sub">30 min</span>
+        </div>
+        <div class="av" style="background:#635bff; color:#fff;">S</div>
+        <div class="iv-main">
+          <div class="iv-title">
+            Recruiter Screen
+            <span class="pill is-status-done">Done</span>
+          </div>
+          <div class="iv-role">
+            <span><span class="av-tiny" style="background:#635bff;">S</span>Stripe</span>
+            <span class="pipe">·</span>
+            <span>Senior Software Engineer, Platform</span>
+            <span class="pipe">·</span>
+            <span class="pill is-screen"><span class="pill-dot"></span>Recruiter screen</span>
+          </div>
+        </div>
+        <div class="iv-right">
+          <div class="stack-avs">
+            <span class="av-tiny" style="background:#635bff;">SH</span>
+          </div>
+          <span class="row-actions">
+            <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+          </span>
+        </div>
+      </div>
+
+      <div class="past-note">
+        Showing 3 of 14 completed · <a href="#">See full history →</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+</body>
+</html>

@@ -1,0 +1,777 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280" />
+<title>TrackMyJob — All Jobs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:        #f7f5f0;
+    --surface:   #ffffff;
+    --surface-2: #fbfaf6;
+    --border:    #ece8dd;
+    --border-strong: #ddd7c7;
+    --ink:       #1f1d1a;
+    --ink-2:     #4b4843;
+    --muted:     #8c887e;
+    --muted-2:   #b3afa3;
+
+    --accent:    #4f46e5;
+    --accent-2:  #6366f1;
+    --accent-soft: #eef0ff;
+    --accent-ink:  #3730a3;
+
+    --wish:    #9c8d6d;
+    --applied: #4f46e5;
+    --intv:    #b8854a;
+    --offer:   #2f8a5c;
+    --rej:     #b04a3f;
+
+    --radius:    14px;
+    --radius-sm: 10px;
+    --shadow-soft: 0 1px 0 rgba(31,29,26,.02), 0 1px 2px rgba(31,29,26,.03);
+
+    --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  /* ---------- Top nav ---------- */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(247, 245, 240, 0.85);
+    backdrop-filter: saturate(140%) blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    gap: 36px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
+  .brand-mark {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: var(--ink); color: var(--bg);
+    display: grid; place-items: center;
+    font-family: var(--font-mono); font-size: 12px; font-weight: 500;
+  }
+  .nav-links { display: flex; align-items: center; gap: 4px; }
+  .nav-link {
+    padding: 7px 12px; border-radius: 8px;
+    font-size: 13.5px; color: var(--ink-2); text-decoration: none;
+    transition: background .15s ease, color .15s ease;
+  }
+  .nav-link:hover { background: rgba(31,29,26,.04); color: var(--ink); }
+  .nav-link.is-active { color: var(--ink); background: rgba(31,29,26,.05); }
+  .nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 14px; border-radius: 9px;
+    font-size: 13.5px; font-weight: 500; font-family: inherit;
+    border: 1px solid transparent; cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, transform .05s ease;
+    line-height: 1;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--ink); color: var(--bg); }
+  .btn-primary:hover { background: #2d2a26; }
+  .btn-ghost {
+    background: transparent; color: var(--ink-2);
+    border-color: var(--border-strong);
+  }
+  .btn-ghost:hover { background: var(--surface); color: var(--ink); }
+  .btn-icon {
+    width: 34px; height: 34px; padding: 0; justify-content: center;
+    background: transparent; border: 1px solid var(--border-strong);
+    color: var(--ink-2); border-radius: 9px;
+  }
+  .btn-icon:hover { background: var(--surface); color: var(--ink); }
+  .btn-sm { padding: 6px 10px; font-size: 12.5px; border-radius: 8px; }
+
+  /* Search (nav) */
+  .search { position: relative; width: 240px; }
+  .search input {
+    width: 100%;
+    padding: 8px 12px 8px 32px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 9px;
+    font-family: inherit; font-size: 13px; color: var(--ink);
+    outline: none;
+  }
+  .search input::placeholder { color: var(--muted-2); }
+  .search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,.10); }
+  .search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted-2); }
+  .kbd {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    font-family: var(--font-mono); font-size: 11px; color: var(--muted);
+    background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px;
+  }
+
+  /* ---------- Main shell ---------- */
+  main {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 44px 32px 80px;
+  }
+
+  /* Page header */
+  .page-head {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 24px; margin-bottom: 28px;
+  }
+  .page-title { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 4px; }
+  .page-sub { color: var(--muted); font-size: 14px; margin: 0; }
+  .page-sub strong { color: var(--ink-2); font-weight: 500; }
+
+  /* ---------- Toolbar ---------- */
+  .toolbar {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .toolbar-search {
+    position: relative; flex: 1; min-width: 280px; max-width: 420px;
+  }
+  .toolbar-search input {
+    width: 100%; padding: 9px 14px 9px 36px;
+    background: var(--surface); border: 1px solid var(--border-strong);
+    border-radius: 10px; font-family: inherit; font-size: 13.5px; color: var(--ink);
+    outline: none;
+  }
+  .toolbar-search input::placeholder { color: var(--muted-2); }
+  .toolbar-search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,.10); }
+  .toolbar-search svg {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--muted-2);
+  }
+
+  .filter {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 12px; border-radius: 10px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--ink-2);
+    font-size: 13px; font-weight: 500;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease;
+  }
+  .filter:hover { background: var(--surface-2); }
+  .filter.is-active {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--bg);
+  }
+  .filter .count {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--muted);
+    background: var(--bg);
+    border-radius: 6px;
+    padding: 1px 6px;
+    margin-left: 2px;
+  }
+  .filter.is-active .count {
+    background: rgba(255,255,255,.12);
+    color: rgba(255,255,255,.85);
+  }
+  .filter .swatch {
+    width: 7px; height: 7px; border-radius: 50%;
+  }
+  .filter.is-active .swatch {
+    box-shadow: 0 0 0 2px rgba(255,255,255,.15);
+  }
+
+  .divider {
+    width: 1px; height: 22px; background: var(--border-strong);
+    margin: 0 4px;
+  }
+
+  /* ---------- Table card ---------- */
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+  }
+  .table {
+    display: grid;
+    /* role | company | status | applied | deadline | source | salary | actions */
+    grid-template-columns:
+      minmax(260px, 1.4fr)
+      minmax(160px, 1fr)
+      120px
+      110px
+      130px
+      120px
+      130px
+      44px;
+  }
+  .th, .td {
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+  .th {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+    gap: 5px;
+    cursor: default;
+  }
+  .th.sortable { cursor: pointer; }
+  .th.sortable:hover { color: var(--ink-2); }
+  .th .sort-ind {
+    color: var(--muted-2);
+    font-family: var(--font-mono);
+  }
+  .th.is-sorted { color: var(--ink); }
+  .th.is-sorted .sort-ind { color: var(--accent); }
+
+  .row {
+    display: contents;
+  }
+  .row > .td { border-bottom: 1px solid var(--border); transition: background .12s ease; }
+  .row:last-child > .td { border-bottom: none; }
+  .row:hover > .td { background: var(--surface-2); }
+
+  .cell-role { gap: 12px; }
+  .avatar {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    display: grid; place-items: center;
+    font-size: 13px; font-weight: 600;
+    color: var(--ink-2);
+    letter-spacing: -0.01em;
+    flex-shrink: 0;
+  }
+  .role-main { min-width: 0; }
+  .role-title {
+    font-size: 14px; font-weight: 500; color: var(--ink);
+    line-height: 1.3;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .role-sub {
+    font-size: 12px; color: var(--muted); margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .cell-company {
+    font-size: 13.5px;
+    color: var(--ink-2);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* Badges */
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 9px; border-radius: 999px;
+    font-size: 12px; font-weight: 500; line-height: 1.4;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--ink-2);
+  }
+  .badge .swatch { width: 6px; height: 6px; border-radius: 50%; }
+  .swatch.wish    { background: var(--wish); }
+  .swatch.applied { background: var(--applied); }
+  .swatch.intv    { background: var(--intv); }
+  .swatch.offer   { background: var(--offer); }
+  .swatch.rej     { background: var(--rej); }
+
+  .badge-soon {
+    background: #fef3ec; border-color: #f6e0cf; color: #8a4a1c;
+  }
+  .badge-urgent {
+    background: #fbeae6; border-color: #f1cfc6; color: #94352a;
+  }
+
+  .mono {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--ink-2);
+    letter-spacing: -0.01em;
+  }
+  .mono-muted { color: var(--muted); }
+
+  .deadline-cell {
+    display: flex; flex-direction: column; gap: 2px; align-items: flex-start;
+  }
+  .deadline-when { font-size: 11px; color: var(--muted); }
+
+  .source-pill {
+    font-size: 11.5px; color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 2px 8px; border-radius: 6px;
+  }
+
+  .row-actions {
+    color: var(--muted-2);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    display: inline-flex;
+  }
+  .row-actions:hover { background: var(--bg); color: var(--ink-2); }
+
+  /* ---------- Pagination ---------- */
+  .pagination {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 18px;
+    color: var(--muted); font-size: 13px;
+  }
+  .pager {
+    display: flex; align-items: center; gap: 4px;
+  }
+  .page-btn {
+    min-width: 32px; height: 32px; padding: 0 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--ink-2);
+    cursor: pointer;
+    transition: background .12s ease, border-color .12s ease;
+  }
+  .page-btn:hover { background: var(--surface); border-color: var(--border-strong); }
+  .page-btn.is-active {
+    background: var(--ink); color: var(--bg);
+    border-color: var(--ink);
+  }
+  .page-btn:disabled {
+    color: var(--muted-2);
+    cursor: not-allowed;
+  }
+  .page-btn:disabled:hover { background: transparent; border-color: transparent; }
+  .page-ellipsis { color: var(--muted-2); padding: 0 4px; }
+
+  .icon { width: 14px; height: 14px; }
+  .icon-sm { width: 12px; height: 12px; }
+
+</style>
+</head>
+<body>
+
+<!-- ============ TOP NAV ============ -->
+<header class="nav">
+  <div class="nav-inner">
+    <div class="brand">
+      <div class="brand-mark">T</div>
+      <span>TrackMyJob</span>
+    </div>
+
+    <nav class="nav-links">
+      <a class="nav-link" href="Dashboard.html">Dashboard</a>
+      <a class="nav-link is-active" href="#">All Jobs</a>
+      <a class="nav-link" href="#">Companies</a>
+      <a class="nav-link" href="#">Interviews</a>
+      <a class="nav-link" href="#">Notes</a>
+    </nav>
+
+    <div class="nav-right">
+      <div class="search">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="7" cy="7" r="4.5"></circle>
+          <path d="M10.5 10.5L13.5 13.5"></path>
+        </svg>
+        <input type="text" placeholder="Search jobs, companies…" />
+        <span class="kbd">⌘K</span>
+      </div>
+
+      <button class="btn btn-icon" aria-label="Settings">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="8" r="1.75"></circle>
+          <path d="M13.5 8a5.5 5.5 0 0 0-.09-1l1.27-.98-1.5-2.6-1.5.56a5.5 5.5 0 0 0-1.74-1l-.23-1.58h-3l-.23 1.58a5.5 5.5 0 0 0-1.74 1l-1.5-.56-1.5 2.6 1.27.98a5.6 5.6 0 0 0 0 2l-1.27.98 1.5 2.6 1.5-.56a5.5 5.5 0 0 0 1.74 1l.23 1.58h3l.23-1.58a5.5 5.5 0 0 0 1.74-1l1.5.56 1.5-2.6-1.27-.98c.06-.33.09-.66.09-1z"></path>
+        </svg>
+      </button>
+
+      <button class="btn btn-primary">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+          <path d="M8 3v10M3 8h10"></path>
+        </svg>
+        New application
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ============ MAIN ============ -->
+<main>
+
+  <!-- Page header -->
+  <section class="page-head">
+    <div>
+      <h1 class="page-title">All Jobs</h1>
+      <p class="page-sub">
+        <strong>52</strong> applications tracked
+        &nbsp;·&nbsp;
+        Sorted by deadline, soonest first
+      </p>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-ghost">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 4h10M5 8h6M7 12h2"></path>
+        </svg>
+        Sort: Deadline ↑
+      </button>
+      <button class="btn btn-ghost">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 4h10M3 8h10M3 12h6"></path>
+          <circle cx="13" cy="12" r="1.25" fill="currentColor"></circle>
+        </svg>
+        Columns
+      </button>
+      <button class="btn btn-ghost">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3v8M5 8l3 3 3-3M3 13h10"></path>
+        </svg>
+        Export
+      </button>
+    </div>
+  </section>
+
+  <!-- Toolbar -->
+  <section class="toolbar">
+    <div class="toolbar-search">
+      <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="7" cy="7" r="4.5"></circle>
+        <path d="M10.5 10.5L13.5 13.5"></path>
+      </svg>
+      <input type="text" placeholder="Search by job title or company…" />
+    </div>
+
+    <div class="divider"></div>
+
+    <button class="filter is-active">All <span class="count">52</span></button>
+    <button class="filter"><span class="swatch wish"></span>Wishlist <span class="count">12</span></button>
+    <button class="filter"><span class="swatch applied"></span>Applied <span class="count">24</span></button>
+    <button class="filter"><span class="swatch intv"></span>Interview <span class="count">06</span></button>
+    <button class="filter"><span class="swatch offer"></span>Offer <span class="count">02</span></button>
+    <button class="filter"><span class="swatch rej"></span>Rejected <span class="count">08</span></button>
+  </section>
+
+  <!-- Table -->
+  <section class="table-card">
+    <div class="table">
+      <!-- Header row -->
+      <div class="th">Role</div>
+      <div class="th">Company</div>
+      <div class="th">Status</div>
+      <div class="th">Applied</div>
+      <div class="th sortable is-sorted">Deadline <span class="sort-ind">↑</span></div>
+      <div class="th">Source</div>
+      <div class="th">Salary</div>
+      <div class="th"></div>
+
+      <!-- Row 1 -->
+      <div class="row">
+        <div class="td cell-role">
+          <div class="avatar" style="background:#635bff; color:#fff; border-color:#635bff;">S</div>
+          <div class="role-main">
+            <div class="role-title">Senior Software Engineer</div>
+            <div class="role-sub">Remote · US</div>
+          </div>
+        </div>
+        <div class="td cell-company">Stripe</div>
+        <div class="td"><span class="badge"><span class="swatch applied"></span>Applied</span></div>
+        <div class="td mono">May 02</div>
+        <div class="td">
+          <div class="deadline-cell">
+            <span class="badge badge-urgent">May 15</span>
+            <span class="deadline-when">Tomorrow</span>
+          </div>
+        </div>
+        <div class="td"><span class="source-pill">LinkedIn</span></div>
+        <div class="td mono">$210–260k</div>
+        <div class="td"><span class="row-actions">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+        </span></div>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="row">
+        <div class="td cell-role">
+          <div class="avatar" style="background:#0d0d0d; color:#fff; border-color:#0d0d0d;">L</div>
+          <div class="role-main">
+            <div class="role-title">Senior Frontend Engineer</div>
+            <div class="role-sub">Remote · Worldwide</div>
+          </div>
+        </div>
+        <div class="td cell-company">Linear</div>
+        <div class="td"><span class="badge"><span class="swatch wish"></span>Wishlist</span></div>
+        <div class="td mono mono-muted">—</div>
+        <div class="td">
+          <div class="deadline-cell">
+            <span class="badge badge-soon">May 16</span>
+            <span class="deadline-when">In 2 days</span>
+          </div>
+        </div>
+        <div class="td"><span class="source-pill">Company site</span></div>
+        <div class="td mono">$180–220k</div>
+        <div class="td"><span class="row-actions">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+        </span></div>
+      </div>
+
+      <!-- Row 3 -->
+      <div class="row">
+        <div class="td cell-role">
+          <div class="avatar" style="background:#fef2ee; color:#dc4a26; border-color:#fbd9cc;">F</div>
+          <div class="role-main">
+            <div class="role-title">Product Designer, Platform</div>
+            <div class="role-sub">San Francisco · Hybrid</div>
+          </div>
+        </div>
+        <div class="td cell-company">Figma</div>
+        <div class="td"><span class="badge"><span class="swatch applied"></span>Applied</span></div>
+        <div class="td mono">Apr 28</div>
+        <div class="td">
+          <div class="deadline-cell">
+            <span class="badge badge-soon">May 17</span>
+            <span class="deadline-when">In 3 days</span>
+          </div>
+        </div>
+        <div class="td"><span class="source-pill">Referral</span></div>
+        <div class="td mono">$170–210k</div>
+        <div class="td"><span class="row-actions">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+        </span></div>
+      </div>
+
+      <!-- Row 4 -->
+      <div class="row">
+        <div class="td cell-role">
+          <div class="avatar" style="background:#0d0d0d; color:#fff; border-color:#0d0d0d;">V</div>
+          <div class="role-main">
+            <div class="role-title">Staff Engineer, Edge</div>
+            <div class="role-sub">Remote · US</div>
+          </div>
+        </div>
+        <div class="td cell-company">Vercel</div>
+        <div class="td"><span class="badge"><span class="swatch intv"></span>Interview</span></div>
+        <div class="td mono">Apr 22</div>
+        <div class="td">
+          <div class="deadline-cell">
+            <span class="badge">May 20</span>
+            <span class="deadline-when">In 6 days</span>
+          </div>
+        </div>
+        <div class="td"><span class="source-pill">LinkedIn</span></div>
+        <div class="td mono">$240–300k</div>
+        <div class="td"><span class="row-actions">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+        </span></div>
+      </div>
+
+      <!-- Row 5 -->
+      <div class="row">
+        <div class="td cell-role">
+          <div class="avatar" style="background:#f5f3ee; color:#c96442; border-color:#ece6d8;">A</div>
+          <div class="role-main">
+            <div class="role-title">Product Engineer</div>
+            <div class="role-sub">San Francisco</div>
+          </div>
+        </div>
+        <div class="td cell-company">Anthropic</div>
+        <div class="td"><span class="badge"><span class="swatch intv"></span>Interview</span></div>
+        <div class="td mono">Apr 15</div>
+        <div class="td">
+          <div class="deadline-cell">
+            <span class="badge">May 22</span>
+            <span class="deadline-when">In 8 days</span>
+          </div>
+        </div>
+        <div class="td"><span class="source-pill">Referral</span></div>
+        <div class="td mono">$220–280k</div>
+        <div class="td"><span class="row-actions">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+        </span></div>
+      </div>
+
+      <!-- Row 6 -->
+      <div class="row">
+        <div class="td cell-role">
+          <div class="avatar" style="background:#fff; color:#1a1a1a; border-color:#e5e5e5;">N</div>
+          <div class="role-main">
+            <div class="role-title">Senior Product Designer</div>
+            <div class="role-sub">New York · Hybrid</div>
+          </div>
+        </div>
+        <div class="td cell-company">Notion</div>
+        <div class="td"><span class="badge"><span class="swatch intv"></span>Interview</span></div>
+        <div class="td mono">Apr 18</div>
+        <div class="td">
+          <div class="deadline-cell">
+            <span class="badge">May 24</span>
+            <span class="deadline-when">In 10 days</span>
+          </div>
+        </div>
+        <div class="td"><span class="source-pill">LinkedIn</span></div>
+        <div class="td mono">$190–230k</div>
+        <div class="td"><span class="row-actions">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+        </span></div>
+      </div>
+
+      <!-- Row 7 -->
+      <div class="row">
+        <div class="td cell-role">
+          <div class="avatar" style="background:#eef9f1; color:#1e7a4a; border-color:#cfead8;">R</div>
+          <div class="role-main">
+            <div class="role-title">Backend Engineer, Payments</div>
+            <div class="role-sub">New York</div>
+          </div>
+        </div>
+        <div class="td cell-company">Ramp</div>
+        <div class="td"><span class="badge"><span class="swatch applied"></span>Applied</span></div>
+        <div class="td mono">May 05</div>
+        <div class="td">
+          <div class="deadline-cell">
+            <span class="badge">May 28</span>
+            <span class="deadline-when">In 14 days</span>
+          </div>
+        </div>
+        <div class="td"><span class="source-pill">Indeed</span></div>
+        <div class="td mono">$200–250k</div>
+        <div class="td"><span class="row-actions">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+        </span></div>
+      </div>
+
+      <!-- Row 8 -->
+      <div class="row">
+        <div class="td cell-role">
+          <div class="avatar" style="background:#f1eefd; color:#5b3fcc; border-color:#dfd6f7;">R</div>
+          <div class="role-main">
+            <div class="role-title">Senior Fullstack Engineer</div>
+            <div class="role-sub">Remote · US</div>
+          </div>
+        </div>
+        <div class="td cell-company">Retool</div>
+        <div class="td"><span class="badge"><span class="swatch wish"></span>Wishlist</span></div>
+        <div class="td mono mono-muted">—</div>
+        <div class="td">
+          <div class="deadline-cell">
+            <span class="badge">Jun 01</span>
+            <span class="deadline-when">In 18 days</span>
+          </div>
+        </div>
+        <div class="td"><span class="source-pill">Company site</span></div>
+        <div class="td mono">$190–240k</div>
+        <div class="td"><span class="row-actions">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+        </span></div>
+      </div>
+
+      <!-- Row 9 -->
+      <div class="row">
+        <div class="td cell-role">
+          <div class="avatar" style="background:#6f3bcc; color:#fff; border-color:#6f3bcc;">D</div>
+          <div class="role-main">
+            <div class="role-title">Solutions Engineer</div>
+            <div class="role-sub">Remote · US</div>
+          </div>
+        </div>
+        <div class="td cell-company">Datadog</div>
+        <div class="td"><span class="badge"><span class="swatch rej"></span>Rejected</span></div>
+        <div class="td mono">Apr 02</div>
+        <div class="td">
+          <div class="deadline-cell">
+            <span class="badge">Jun 03</span>
+            <span class="deadline-when">In 20 days</span>
+          </div>
+        </div>
+        <div class="td"><span class="source-pill">LinkedIn</span></div>
+        <div class="td mono">$160–200k</div>
+        <div class="td"><span class="row-actions">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+        </span></div>
+      </div>
+
+      <!-- Row 10 -->
+      <div class="row">
+        <div class="td cell-role">
+          <div class="avatar" style="background:#fff7e6; color:#b88416; border-color:#f0e4c5;">A</div>
+          <div class="role-main">
+            <div class="role-title">Senior Designer, Growth</div>
+            <div class="role-sub">San Francisco · Hybrid</div>
+          </div>
+        </div>
+        <div class="td cell-company">Airtable</div>
+        <div class="td"><span class="badge"><span class="swatch offer"></span>Offer</span></div>
+        <div class="td mono">Mar 28</div>
+        <div class="td">
+          <div class="deadline-cell">
+            <span class="badge">Jun 05</span>
+            <span class="deadline-when">In 22 days</span>
+          </div>
+        </div>
+        <div class="td"><span class="source-pill">Referral</span></div>
+        <div class="td mono">$180–225k</div>
+        <div class="td"><span class="row-actions">
+          <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
+        </span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pagination -->
+  <section class="pagination">
+    <div>Showing <span class="mono" style="color: var(--ink-2)">1–10</span> of <span class="mono" style="color: var(--ink-2)">52</span></div>
+    <div class="pager">
+      <button class="page-btn" disabled aria-label="Previous">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 3L5 8l5 5"></path>
+        </svg>
+      </button>
+      <button class="page-btn is-active">1</button>
+      <button class="page-btn">2</button>
+      <button class="page-btn">3</button>
+      <button class="page-btn">4</button>
+      <span class="page-ellipsis">…</span>
+      <button class="page-btn">6</button>
+      <button class="page-btn" aria-label="Next">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 3l5 5-5 5"></path>
+        </svg>
+      </button>
+    </div>
+  </section>
+
+</main>
+
+</body>
+</html>
