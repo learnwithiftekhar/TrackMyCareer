@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -235,7 +236,12 @@ export default function AllJobs() {
                   {job.avatar.letter}
                 </div>
                 <div className="min-w-0">
-                  <div className="truncate text-[14px] font-medium leading-[1.3] text-foreground">{job.title}</div>
+                  <Link
+                    to={`/jobs/${job.id}`}
+                    className="block truncate text-[14px] font-medium leading-[1.3] text-foreground no-underline hover:text-indigo"
+                  >
+                    {job.title}
+                  </Link>
                   <div className="mt-0.5 truncate text-[12px] text-muted-foreground">{job.location}</div>
                 </div>
               </div>

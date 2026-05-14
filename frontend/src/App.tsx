@@ -3,6 +3,7 @@ import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
 import AllJobs from './pages/AllJobs';
 import NewApplication from './pages/NewApplication';
+import JobDetail from './pages/JobDetail';
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/jobs" element={<AllJobs />} />
         <Route path="/jobs/new" element={<NewApplication />} />
+        <Route path="/jobs/:id" element={<JobDetail />} />
       </Routes>
     </BrowserRouter>
   );
