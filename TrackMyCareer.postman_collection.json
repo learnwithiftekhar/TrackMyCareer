@@ -1,0 +1,253 @@
+{
+  "info": {
+    "name": "TrackMyCareer",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api"
+    }
+  ],
+  "item": [
+    {
+      "name": "Companies",
+      "item": [
+        {
+          "name": "List Companies",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/companies",
+              "host": ["{{baseUrl}}"],
+              "path": ["companies"]
+            }
+          }
+        },
+        {
+          "name": "Get Company by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/companies/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["companies", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Company",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/companies",
+              "host": ["{{baseUrl}}"],
+              "path": ["companies"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companyName\": \"Example Corp\",\n  \"about\": \"A leading tech company.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Company",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/companies/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["companies", "1"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companyName\": \"Example Corp Updated\",\n  \"about\": \"Updated company description.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Company",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/companies/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["companies", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Jobs",
+      "item": [
+        {
+          "name": "List Jobs",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/jobs?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["jobs"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" },
+                { "key": "search", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Jobs (with search)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/jobs?page=0&size=10&search=engineer",
+              "host": ["{{baseUrl}}"],
+              "path": ["jobs"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" },
+                { "key": "search", "value": "engineer" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Job by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/jobs/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["jobs", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Job",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/jobs",
+              "host": ["{{baseUrl}}"],
+              "path": ["jobs"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jobTitle\": \"Software Engineer\",\n  \"companyId\": 1,\n  \"appliedStatus\": \"Applied\",\n  \"jobDescription\": \"Build and maintain backend services.\",\n  \"coverLetter\": \"I am excited to apply...\",\n  \"appliedDate\": \"2026-05-10\",\n  \"deadline\": \"2026-05-31\",\n  \"jobUrl\": \"https://example.com/jobs/123\",\n  \"jobSource\": \"LinkedIn\",\n  \"salaryRange\": \"$120k - $150k\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Job",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/jobs/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["jobs", "1"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jobTitle\": \"Senior Software Engineer\",\n  \"companyId\": 1,\n  \"appliedStatus\": \"Interview\",\n  \"jobDescription\": \"Lead backend architecture.\",\n  \"coverLetter\": \"Updated cover letter...\",\n  \"appliedDate\": \"2026-05-10\",\n  \"deadline\": \"2026-06-15\",\n  \"jobUrl\": \"https://example.com/jobs/123\",\n  \"jobSource\": \"LinkedIn\",\n  \"salaryRange\": \"$140k - $170k\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Job",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/jobs/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["jobs", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Validation Errors",
+      "item": [
+        {
+          "name": "Create Job — missing required fields",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/jobs",
+              "host": ["{{baseUrl}}"],
+              "path": ["jobs"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jobTitle\": \"\",\n  \"companyId\": null,\n  \"appliedStatus\": null\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Job — invalid enum value",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/jobs",
+              "host": ["{{baseUrl}}"],
+              "path": ["jobs"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jobTitle\": \"Engineer\",\n  \"companyId\": 1,\n  \"appliedStatus\": \"INVALID_STATUS\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Create Job — future appliedDate",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/jobs",
+              "host": ["{{baseUrl}}"],
+              "path": ["jobs"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jobTitle\": \"Engineer\",\n  \"companyId\": 1,\n  \"appliedStatus\": \"Applied\",\n  \"appliedDate\": \"2030-01-01\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Job — not found",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/jobs/99999",
+              "host": ["{{baseUrl}}"],
+              "path": ["jobs", "99999"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

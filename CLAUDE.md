@@ -59,8 +59,20 @@ Standard Spring Boot layered architecture: `Controller → Service → Repositor
 - `repository/` — Spring Data JPA repositories
 - `model/` — JPA entities
 - `dto/` — request/response DTOs (never expose entities directly)
+- `exception/` — `GlobalExceptionHandler` (`@RestControllerAdvice`) for consistent error responses
 
 CORS is configured to allow requests from `http://localhost:5173` in dev.
+
+### Error Handling
+All errors return a consistent JSON shape:
+```json
+{ "status": 404, "error": "Not Found", "message": "Company not found" }
+```
+- `ResponseStatusException` — status and message extracted dynamically via `ex.getStatusCode()` and `ex.getReason()`
+- `MethodArgumentNotValidException` — 400 with all failing field messages joined by `;`
+- Unhandled `Exception` — 500 with a safe generic message
+
+Services always use `HttpStatus.NOT_FOUND` (404) for missing entities, never `BAD_REQUEST`.
 
 ### Frontend
 - `src/pages/` — top-level route pages (Dashboard, AllJobs)
