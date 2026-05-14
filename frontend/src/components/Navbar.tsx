@@ -1,6 +1,13 @@
+import { NavLink } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
-const NAV_LINKS = ['Dashboard', 'All Jobs', 'Companies', 'Interviews', 'Notes'];
+const NAV_LINKS = [
+  { label: 'Dashboard', to: '/' },
+  { label: 'All Jobs',  to: '/jobs' },
+  { label: 'Companies', to: '/companies' },
+  { label: 'Interviews', to: '/interviews' },
+  { label: 'Notes',     to: '/notes' },
+];
 
 export default function Navbar() {
   return (
@@ -8,27 +15,30 @@ export default function Navbar() {
       <div className="mx-auto flex max-w-[1180px] items-center gap-9 px-8 py-[14px]">
 
         {/* Brand */}
-        <div className="flex items-center gap-2.5 text-[15px] font-semibold tracking-[-0.01em]">
+        <NavLink to="/" className="flex items-center gap-2.5 text-[15px] font-semibold tracking-[-0.01em] text-foreground no-underline">
           <div className="grid size-[22px] shrink-0 place-items-center rounded-[6px] bg-foreground font-mono text-[12px] font-medium text-background">
             T
           </div>
           <span>TrackMyCareer</span>
-        </div>
+        </NavLink>
 
         {/* Nav links */}
         <nav className="flex items-center gap-1">
-          {NAV_LINKS.map((link) => (
-            <a
-              key={link}
-              href="#"
-              className={`rounded-lg px-3 py-[7px] text-[13.5px] transition-colors ${
-                link === 'Dashboard'
-                  ? 'bg-foreground/5 text-foreground'
-                  : 'text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground'
-              }`}
+          {NAV_LINKS.map(({ label, to }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === '/'}
+              className={({ isActive }) =>
+                `rounded-lg px-3 py-[7px] text-[13.5px] transition-colors no-underline ${
+                  isActive
+                    ? 'bg-foreground/5 text-foreground font-medium'
+                    : 'text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground'
+                }`
+              }
             >
-              {link}
-            </a>
+              {label}
+            </NavLink>
           ))}
         </nav>
 
@@ -38,7 +48,7 @@ export default function Navbar() {
           {/* Search */}
           <div className="relative w-60">
             <svg
-              className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/60 pointer-events-none"
+              className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/60"
               viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"
               strokeLinecap="round" strokeLinejoin="round"
             >
@@ -48,7 +58,7 @@ export default function Navbar() {
             <input
               type="text"
               placeholder="Search jobs, companies…"
-              className="h-[34px] w-full rounded-[9px] border border-[#ddd7c7] bg-card pl-8 pr-10 text-[13px] text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-indigo focus:ring-[3px] focus:ring-indigo/10 transition-colors"
+              className="h-[34px] w-full rounded-[9px] border border-[#ddd7c7] bg-card pl-8 pr-10 text-[13px] text-foreground placeholder:text-muted-foreground/50 outline-none transition-colors focus:border-indigo focus:ring-[3px] focus:ring-indigo/10"
             />
             <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 rounded-[5px] border border-border bg-background px-[5px] py-px font-mono text-[11px] text-muted-foreground">
               ⌘K

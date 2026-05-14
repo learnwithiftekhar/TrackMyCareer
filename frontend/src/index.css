@@ -87,3 +87,16 @@
     text-rendering: optimizeLegibility;
   }
 }
+
+/* Jobs table row hover — display:contents rows can't use Tailwind group-hover */
+@layer components {
+  .job-row > * {
+    transition: background-color 0.12s ease;
+  }
+  .job-row:hover > * {
+    background-color: var(--secondary);
+  }
+  .job-row:last-child > * {
+    border-bottom: none !important;
+  }
+}
