@@ -16,6 +16,25 @@ export interface Job {
   createdAt: string;
 }
 
+export interface InterviewSummary {
+  id: number;
+  roundName: string;
+  interviewDate: string | null;
+  notes: string | null;
+}
+
+export interface NoteSummary {
+  id: number;
+  note: string;
+  createdAt: string;
+}
+
+export interface JobDetail extends Job {
+  companyAbout: string | null;
+  interviews: InterviewSummary[];
+  notes: NoteSummary[];
+}
+
 export interface JobPage {
   content: Job[];
   totalElements: number;
@@ -63,6 +82,12 @@ export interface JobCreateRequest {
   jobUrl?: string;
   jobSource?: string;
   salaryRange?: string;
+}
+
+export async function getJob(id: number): Promise<JobDetail> {
+  const res = await fetch(`${BASE}/${id}`);
+  if (!res.ok) throw new Error('Failed to fetch job');
+  return res.json();
 }
 
 export async function createJob(data: JobCreateRequest): Promise<Job> {

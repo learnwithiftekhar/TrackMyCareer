@@ -62,7 +62,31 @@ public class JobService {
 
     @Transactional(readOnly = true)
     public JobResponse getJob(Long id) {
-        return toResponse(findById(id));
+        Job job = findById(id);
+        JobResponse response = toResponse(job);
+        response.setCompanyAbout(job.getCompany().getAbout());
+        response.setInterviews(job.getInterviews().stream()
+                .sorted(java.util.Comparator.comparing(
+                        i -> i.getInterviewDate() == null ? java.time.LocalDate.MAX : i.getInterviewDate()))
+                .map(i -> {
+                    JobResponse.InterviewSummary s = new JobResponse.InterviewSummary();
+                    s.setId(i.getId());
+                    s.setRoundName(i.getRoundName());
+                    s.setInterviewDate(i.getInterviewDate());
+                    s.setNotes(i.getNotes());
+                    return s;
+                }).toList());
+        response.setNotes(job.getNotes().stream()
+                .sorted(java.util.Comparator.comparing(
+                        (com.learnwithiftekhar.server.model.Note n) -> n.getCreatedAt()).reversed())
+                .map(n -> {
+                    JobResponse.NoteSummary s = new JobResponse.NoteSummary();
+                    s.setId(n.getId());
+                    s.setNote(n.getNote());
+                    s.setCreatedAt(n.getCreatedAt());
+                    return s;
+                }).toList());
+        return response;
     }
 
     public JobResponse createJob(JobRequest request) {
