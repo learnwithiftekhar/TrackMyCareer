@@ -111,6 +111,13 @@ public class JobService {
         return toResponse(jobRepository.save(job));
     }
 
+    @Transactional(readOnly = true)
+    public JobResponse getJobByUrl(String url) {
+        Job job = jobRepository.findByJobUrl(url)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No job found for this URL"));
+        return toResponse(job);
+    }
+
     public void deleteJob(Long id) {
         if (!jobRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found");

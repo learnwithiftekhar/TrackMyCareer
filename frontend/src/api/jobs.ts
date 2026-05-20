@@ -102,6 +102,53 @@ export async function createJob(data: JobCreateRequest): Promise<Job> {
   return res.json();
 }
 
+export interface AutofillResult {
+  jobTitle: string | null;
+  companyName: string | null;
+  jobDescription: string | null;
+  salaryRange: string | null;
+  jobSource: string | null;
+}
+
+export async function autofillFromUrl(url: string): Promise<AutofillResult> {
+  const res = await fetch(`${BASE}/autofill`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { message?: string }).message ?? 'Failed to autofill');
+  }
+  return res.json();
+}
+
+export async function getJobByUrl(url: string): Promise<Job> {
+  const endpoint = new URL(`${BASE}/by-url`);
+  endpoint.searchParams.set('url', url);
+  const res = await fetch(endpoint.toString());
+  if (!res.ok) throw new Error('No job found for this URL');
+  return res.json();
+}
+
+export async function generateCoverLetter(params: {
+  jobTitle: string;
+  companyName?: string;
+  jobDescription?: string;
+}): Promise<string> {
+  const res = await fetch(`${BASE}/cover-letter`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { message?: string }).message ?? 'Failed to generate cover letter');
+  }
+  const data = await res.json();
+  return data.coverLetter as string;
+}
+
 export async function updateJob(id: number, data: JobCreateRequest): Promise<Job> {
   const res = await fetch(`${BASE}/${id}`, {
     method: 'PUT',

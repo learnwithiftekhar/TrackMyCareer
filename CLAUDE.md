@@ -14,6 +14,8 @@ TrackMyCareer is a single-user personal job application tracker. No authenticati
 | ORM | Spring Data JPA + Hibernate |
 | Database | PostgreSQL |
 | Migrations | Flyway |
+| AI | Spring AI + OpenAI (`gpt-4o-mini`) |
+| HTML scraping | Jsoup |
 | Frontend | React + Vite, TypeScript |
 | Styling | Tailwind CSS v4 |
 | UI Components | shadcn/ui |
@@ -24,9 +26,26 @@ TrackMyCareer is a single-user personal job application tracker. No authenticati
 ```
 TrackMyCareer/
 ├── server/           # Spring Boot Maven project
+│   └── .env          # local secrets (not committed); loaded manually — see Environment section
 ├── frontend/         # React + Vite + TypeScript app
 └── UI Designs/       # Static HTML mockups for each page/screen
 ```
+
+## Environment Setup
+
+The backend reads secrets from environment variables. Create `server/.env`:
+
+```
+OPEN_AI_KEY=sk-...
+```
+
+Spring Boot does **not** load `.env` files automatically. Before running the server, export the variable in your shell:
+
+```bash
+export $(cat server/.env | xargs) && cd server && mvn spring-boot:run
+```
+
+Or configure your IDE run configuration to load `server/.env` as environment variables.
 
 ## Backend Commands
 
@@ -56,7 +75,7 @@ bun run lint                 # lint
 Standard Spring Boot layered architecture: `Controller → Service → Repository`.
 
 - `controller/` — REST controllers: `JobController`, `CompanyController`, `DashboardController`, `HelloController`
-- `service/` — business logic
+- `service/` — business logic; `AutofillService` handles AI-powered job detail extraction
 - `repository/` — Spring Data JPA repositories; custom JPQL queries for search, status counts, and date-range lookups
 - `model/` — JPA entities
 - `dto/` — request/response DTOs (never expose entities directly); `DashboardSummaryResponse` aggregates status counts, upcoming deadlines, and upcoming interviews in one call
@@ -69,10 +88,23 @@ CORS is configured to allow requests from `http://localhost:5173` in dev.
 |---|---|---|
 | GET | `/api/dashboard/summary` | Status counts, upcoming deadlines (3 days), upcoming interviews (7 days) |
 | GET | `/api/jobs` | Paginated jobs; query params: `page`, `size`, `search`, `status` |
-| GET | `/api/jobs/counts` | Status counts map |
+| GET | `/api/jobs/status/count` | Status counts map |
+| GET | `/api/jobs/by-url?url=` | Look up a job by its saved `job_url` field |
+| POST | `/api/jobs/autofill` | Fetch a URL with Jsoup, extract job details via OpenAI, return prefill data |
 | GET/POST | `/api/jobs/{id}` | Get / create / update / delete a job |
 | GET/POST | `/api/companies` | List / create companies |
 | GET/PUT/DELETE | `/api/companies/{id}` | Get / update / delete a company |
+| GET/POST | `/api/interviews` | List (optionally filter by `?jobId=`) / create interviews |
+| GET/PUT/DELETE | `/api/interviews/{id}` | Get / update / delete an interview |
+
+#### AI Autofill (`AutofillService`)
+`POST /api/jobs/autofill` body: `{ "url": "https://..." }`
+
+1. Jsoup fetches the URL and extracts up to 8000 chars of body text.
+2. Spring AI `ChatClient` sends the text to `gpt-4o-mini` and maps the response directly to `AutofillResponse` via `.entity(AutofillResponse.class)`.
+3. Returns: `jobTitle`, `companyName`, `jobDescription`, `salaryRange`, `jobSource`.
+
+Returns `503` if `OPEN_AI_KEY` is not set.
 
 ### Error Handling
 All errors return a consistent JSON shape:
@@ -88,9 +120,17 @@ Services always use `HttpStatus.NOT_FOUND` (404) for missing entities, never `BA
 ### Frontend
 - `src/pages/` — one file per route: `Dashboard`, `AllJobs`, `NewApplication`, `JobDetail`, `Companies`, `Interviews`, `NewInterview`
 - `src/components/` — reusable UI components (e.g. `Navbar`)
-- `src/api/` — one file per backend resource (`jobs.ts`, `companies.ts`, `dashboard.ts`); all HTTP calls live here, nowhere else
+- `src/api/` — one file per backend resource (`jobs.ts`, `companies.ts`, `dashboard.ts`, `interviews.ts`); all HTTP calls live here, nowhere else
 
 Routes are defined in `App.tsx` using React Router v6. The frontend calls the backend at `http://localhost:8080/api`.
+
+#### Frontend API — `jobs.ts` exports
+- `getJobs(params)` — paginated job list
+- `getJob(id)` — single job with interviews and notes
+- `getJobByUrl(url)` — look up job by its saved URL (used by New Interview autofill)
+- `autofillFromUrl(url)` — call `/api/jobs/autofill` to AI-extract job details (used by New Application)
+- `createJob(data)` / `updateJob(id, data)` / `deleteJob(id)`
+- `getStatusCounts()`
 
 ### UI Designs
 Static HTML mockups live in `UI Designs/`. **Always consult the relevant file before building or modifying a page or component** — these are the source of truth for layout, styling, and UX.

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { getCompanies, type Company } from '@/api/companies';
-import { createJob } from '@/api/jobs';
+import { autofillFromUrl, createJob, generateCoverLetter } from '@/api/jobs';
 
 type Status = 'Wishlist' | 'Applied' | 'Interview' | 'Offer' | 'Rejected';
 
@@ -59,11 +59,15 @@ export default function NewApplication() {
     coverLetter: '',
   });
   const [pasteUrl, setPasteUrl] = useState('');
+  const [autofilling, setAutofilling] = useState(false);
+  const [autofillError, setAutofillError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [generatingCoverLetter, setGeneratingCoverLetter] = useState(false);
+  const [coverLetterError, setCoverLetterError] = useState<string | null>(null);
   const companyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -100,6 +104,57 @@ export default function NewApplication() {
     if (!form.jobTitle.trim()) e.jobTitle = 'Job title is required';
     if (!form.companyId)       e.companyId = 'Company is required';
     return e;
+  }
+
+  async function handleAutofill() {
+    const url = pasteUrl.trim();
+    if (!url) return;
+    setAutofilling(true);
+    setAutofillError(null);
+    try {
+      const result = await autofillFromUrl(url);
+      setForm((f) => ({
+        ...f,
+        jobTitle: result.jobTitle ?? f.jobTitle,
+        jobUrl: url,
+        description: result.jobDescription ?? f.description,
+        source: result.jobSource ?? f.source,
+        salaryMin: result.salaryRange ?? f.salaryMin,
+      }));
+      if (result.companyName) {
+        const match = companies.find(
+          (c) => c.companyName.toLowerCase() === result.companyName!.toLowerCase(),
+        );
+        if (match) {
+          selectCompany(match);
+        } else {
+          setForm((f) => ({ ...f, companySearch: result.companyName!, companyId: null }));
+          setCompanyDropdownOpen(true);
+        }
+      }
+    } catch (err) {
+      setAutofillError(err instanceof Error ? err.message : 'Autofill failed. Please try again.');
+    } finally {
+      setAutofilling(false);
+    }
+  }
+
+  async function handleGenerateCoverLetter() {
+    if (!form.jobTitle.trim()) return;
+    setGeneratingCoverLetter(true);
+    setCoverLetterError(null);
+    try {
+      const draft = await generateCoverLetter({
+        jobTitle: form.jobTitle.trim(),
+        companyName: form.companySearch.trim() || undefined,
+        jobDescription: form.description.trim() || undefined,
+      });
+      set('coverLetter', draft);
+    } catch (err) {
+      setCoverLetterError(err instanceof Error ? err.message : 'Failed to generate. Try again.');
+    } finally {
+      setGeneratingCoverLetter(false);
+    }
   }
 
   async function handleSubmit() {
@@ -169,17 +224,28 @@ export default function NewApplication() {
           <p className="mt-0.5 text-[12.5px] text-muted-foreground">We'll pull the company, role, and description from the listing.</p>
         </div>
         <div />
-        <div className="col-span-3 mt-1 flex gap-2">
-          <input
-            type="text"
-            value={pasteUrl}
-            onChange={(e) => setPasteUrl(e.target.value)}
-            placeholder="https://stripe.com/jobs/listing/…"
-            className="flex-1 rounded-[10px] border border-[#dadcfa] bg-white px-[14px] py-2.5 font-mono text-[13px] text-foreground outline-none placeholder:font-sans placeholder:text-muted-foreground/50 focus:border-indigo focus:ring-[3px] focus:ring-indigo/10"
-          />
-          <button className="cursor-pointer rounded-[10px] bg-indigo px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-[#4338ca]">
-            Autofill
-          </button>
+        <div className="col-span-3 mt-1 flex flex-col gap-2">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={pasteUrl}
+              onChange={(e) => { setPasteUrl(e.target.value); setAutofillError(null); }}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleAutofill(); }}
+              placeholder="https://stripe.com/jobs/listing/…"
+              className="flex-1 rounded-[10px] border border-[#dadcfa] bg-white px-[14px] py-2.5 font-mono text-[13px] text-foreground outline-none placeholder:font-sans placeholder:text-muted-foreground/50 focus:border-indigo focus:ring-[3px] focus:ring-indigo/10"
+            />
+            <button
+              type="button"
+              onClick={handleAutofill}
+              disabled={autofilling || !pasteUrl.trim()}
+              className="cursor-pointer rounded-[10px] bg-indigo px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-[#4338ca] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {autofilling ? 'Filling…' : 'Autofill'}
+            </button>
+          </div>
+          {autofillError && (
+            <p className="text-[12.5px] text-red-500">{autofillError}</p>
+          )}
         </div>
       </section>
 
@@ -472,12 +538,27 @@ export default function NewApplication() {
                 className={cn(textareaCls)}
               />
               <div className="mt-1.5 flex items-center justify-between text-[12px] text-muted-foreground">
-                <span>You can generate a first draft from the job description.</span>
-                <button type="button" className="inline-flex cursor-pointer items-center gap-1.5 rounded-[7px] border border-transparent px-2 py-1 text-[12px] text-muted-foreground transition-colors hover:bg-background hover:text-secondary-foreground">
-                  <svg className="size-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M8 2l1.5 4L14 7.5l-4.5 1.5L8 13l-1.5-4L2 7.5 6.5 6z" />
-                  </svg>
-                  Generate draft
+                <span>
+                  {coverLetterError
+                    ? <span className="text-red-500">{coverLetterError}</span>
+                    : 'Generate a first draft from the job title and description.'}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleGenerateCoverLetter}
+                  disabled={generatingCoverLetter || !form.jobTitle.trim()}
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-[7px] border border-transparent px-2 py-1 text-[12px] text-muted-foreground transition-colors hover:bg-background hover:text-secondary-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {generatingCoverLetter ? (
+                    <svg className="size-3 animate-spin" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M8 2a6 6 0 1 1-4.24 1.76" strokeLinecap="round" />
+                    </svg>
+                  ) : (
+                    <svg className="size-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M8 2l1.5 4L14 7.5l-4.5 1.5L8 13l-1.5-4L2 7.5 6.5 6z" />
+                    </svg>
+                  )}
+                  {generatingCoverLetter ? 'Generating…' : 'Generate draft'}
                 </button>
               </div>
             </div>

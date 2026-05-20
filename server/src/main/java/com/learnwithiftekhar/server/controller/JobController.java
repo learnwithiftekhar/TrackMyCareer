@@ -1,7 +1,12 @@
 package com.learnwithiftekhar.server.controller;
 
+import com.learnwithiftekhar.server.dto.AutofillRequest;
+import com.learnwithiftekhar.server.dto.AutofillResponse;
+import com.learnwithiftekhar.server.dto.CoverLetterRequest;
+import com.learnwithiftekhar.server.dto.CoverLetterResponse;
 import com.learnwithiftekhar.server.dto.JobRequest;
 import com.learnwithiftekhar.server.dto.JobResponse;
+import com.learnwithiftekhar.server.service.AutofillService;
 import com.learnwithiftekhar.server.service.JobService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -15,9 +20,11 @@ import java.util.Map;
 public class JobController {
 
     private final JobService jobService;
+    private final AutofillService autofillService;
 
-    public JobController(JobService jobService) {
+    public JobController(JobService jobService, AutofillService autofillService) {
         this.jobService = jobService;
+        this.autofillService = autofillService;
     }
 
     @GetMapping
@@ -35,6 +42,21 @@ public class JobController {
     @GetMapping("/status/count")
     public Map<String, Long> getStatusCounts() {
         return jobService.getStatusCounts();
+    }
+
+    @PostMapping("/autofill")
+    public AutofillResponse autofillJob(@Valid @RequestBody AutofillRequest request) {
+        return autofillService.autofill(request.getUrl());
+    }
+
+    @PostMapping("/cover-letter")
+    public CoverLetterResponse generateCoverLetter(@Valid @RequestBody CoverLetterRequest request) {
+        return autofillService.generateCoverLetter(request);
+    }
+
+    @GetMapping("/by-url")
+    public JobResponse getJobByUrl(@RequestParam String url) {
+        return jobService.getJobByUrl(url);
     }
 
     @GetMapping("/{id}")

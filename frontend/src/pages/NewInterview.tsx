@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { getJobs, type Job } from '@/api/jobs';
+import { getJobs, getJobByUrl, type Job } from '@/api/jobs';
 import { createInterview } from '@/api/interviews';
 
 const QUICK_ROUNDS = ['Phone Screen', 'Technical', 'System Design', 'Hiring Manager', 'Portfolio', 'Onsite / Final'];
@@ -34,6 +34,8 @@ export default function NewInterview() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [jobDropdownOpen, setJobDropdownOpen] = useState(false);
   const [jobDropdownPos, setJobDropdownPos] = useState({ top: 0, left: 0, width: 0 });
+  const [urlInput, setUrlInput] = useState('');
+  const [urlStatus, setUrlStatus] = useState<'idle' | 'loading' | 'found' | 'not-found'>('idle');
   const [errors, setErrors] = useState<{ roundName?: string; jobId?: string }>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -63,6 +65,26 @@ export default function NewInterview() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    const trimmed = urlInput.trim();
+    if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) return;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      if (cancelled) return;
+      setUrlStatus('loading');
+      getJobByUrl(trimmed)
+        .then((job) => {
+          if (cancelled) return;
+          setForm((f) => ({ ...f, jobId: job.id, jobSearch: jobLabel(job) }));
+          setErrors((e) => ({ ...e, jobId: undefined }));
+          setJobDropdownOpen(false);
+          setUrlStatus('found');
+        })
+        .catch(() => { if (!cancelled) setUrlStatus('not-found'); });
+    }, 300);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [urlInput]);
 
   function openDropdown() {
     if (inputWrapperRef.current) {
@@ -154,6 +176,8 @@ export default function NewInterview() {
                   onChange={(e) => {
                     set('jobSearch', e.target.value);
                     setForm((f) => ({ ...f, jobId: null }));
+                    setUrlInput('');
+                    setUrlStatus('idle');
                     openDropdown();
                   }}
                   onFocus={openDropdown}
@@ -197,6 +221,31 @@ export default function NewInterview() {
               </div>,
               document.body,
             )}
+          </Field>
+          <Field label={<>Job URL <OptLabel /></>}>
+            <div className="flex items-center gap-2.5">
+              <input
+                type="url"
+                value={urlInput}
+                onChange={(e) => { setUrlInput(e.target.value); setUrlStatus('idle'); }}
+                placeholder="Paste a job posting URL to auto-select…"
+                className={cn(fieldInputCls(), 'flex-1')}
+              />
+              {urlStatus === 'loading' && (
+                <span className="shrink-0 text-[12px] text-muted-foreground">Matching…</span>
+              )}
+              {urlStatus === 'found' && (
+                <span className="flex shrink-0 items-center gap-1 text-[12px] text-emerald-600">
+                  <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 8l4 4 6-6" />
+                  </svg>
+                  Job matched
+                </span>
+              )}
+              {urlStatus === 'not-found' && (
+                <span className="shrink-0 text-[12px] text-muted-foreground/70">No match found</span>
+              )}
+            </div>
           </Field>
         </FieldCard>
       </Section>
