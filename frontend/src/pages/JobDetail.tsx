@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { getJob, type JobDetail as JobDetailData, type NoteSummary } from '@/api/jobs';
+import { getJob, updateJob, type JobDetail as JobDetailData, type NoteSummary } from '@/api/jobs';
 
 type Status = 'Wishlist' | 'Applied' | 'Interview' | 'Offer' | 'Rejected';
 type Tab = 'Overview' | 'Description' | 'Cover letter' | 'Interviews' | 'Notes';
@@ -183,6 +183,10 @@ export default function JobDetail() {
   const [localNotes, setLocalNotes] = useState<NoteSummary[]>([]);
   const [notesReady, setNotesReady] = useState(false);
   const [savedBanner, setSavedBanner] = useState(() => !!(location.state as { saved?: boolean } | null)?.saved);
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  const [statusUpdating, setStatusUpdating] = useState(false);
+  const [statusError, setStatusError] = useState<string | null>(null);
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (savedBanner) {
@@ -191,6 +195,43 @@ export default function JobDetail() {
       return () => clearTimeout(t);
     }
   }, [savedBanner]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(e.target as Node)) {
+        setStatusDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  async function changeStatus(newStatus: Status) {
+    if (!job || statusUpdating) return;
+    setStatusDropdownOpen(false);
+    setStatusUpdating(true);
+    setStatusError(null);
+    try {
+      await updateJob(Number(id), {
+        jobTitle: job.jobTitle,
+        companyId: job.companyId,
+        appliedStatus: newStatus,
+        jobDescription: job.jobDescription ?? undefined,
+        coverLetter: job.coverLetter ?? undefined,
+        appliedDate: job.appliedDate ?? undefined,
+        deadline: job.deadline ?? undefined,
+        jobUrl: job.jobUrl ?? undefined,
+        jobSource: job.jobSource ?? undefined,
+        salaryRange: job.salaryRange ?? undefined,
+      });
+      setJob((prev) => prev ? { ...prev, appliedStatus: newStatus } : prev);
+    } catch {
+      setStatusError('Failed to update status.');
+      setTimeout(() => setStatusError(null), 3000);
+    } finally {
+      setStatusUpdating(false);
+    }
+  }
 
   useEffect(() => {
     if (!id) return;
@@ -333,9 +374,64 @@ export default function JobDetail() {
             </svg>
             Edit
           </button>
-          <button className="inline-flex cursor-pointer items-center gap-1.5 rounded-[9px] border border-[#ddd7c7] bg-transparent px-3.5 py-2 text-[13.5px] font-medium text-secondary-foreground transition-colors hover:bg-card hover:text-foreground">
-            Change status
-          </button>
+          <div ref={statusDropdownRef} className="relative">
+            <button
+              onClick={() => !statusUpdating && setStatusDropdownOpen((o) => !o)}
+              disabled={statusUpdating}
+              className={cn(
+                'inline-flex cursor-pointer items-center gap-1.5 rounded-[9px] border border-[#ddd7c7] bg-transparent px-3.5 py-2 text-[13.5px] font-medium text-secondary-foreground transition-colors hover:bg-card hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60',
+                statusError && 'border-red-300 text-[#94352a]',
+              )}
+            >
+              {statusUpdating ? (
+                <>
+                  <svg className="size-3.5 animate-spin" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M8 2a6 6 0 1 0 6 6" strokeLinecap="round" />
+                  </svg>
+                  Updating…
+                </>
+              ) : statusError ? (
+                <>
+                  <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="8" cy="8" r="6" /><path d="M8 5v3.5M8 11v.5" />
+                  </svg>
+                  {statusError}
+                </>
+              ) : (
+                <>
+                  Change status
+                  <svg className={cn('size-3 transition-transform', statusDropdownOpen && 'rotate-180')} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 6l4 4 4-4" />
+                  </svg>
+                </>
+              )}
+            </button>
+            {statusDropdownOpen && (
+              <div className="absolute right-0 top-full z-30 mt-1.5 min-w-[168px] overflow-hidden rounded-[11px] border border-border bg-card shadow-[0_4px_16px_-8px_rgba(31,29,26,.18),0_1px_2px_rgba(31,29,26,.06)]">
+                <div className="px-2 py-1.5">
+                  {STATUSES.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => changeStatus(s)}
+                      className={cn(
+                        'flex w-full cursor-pointer items-center gap-2.5 rounded-[7px] px-2.5 py-[7px] text-[13px] transition-colors hover:bg-background',
+                        status === s ? 'font-medium text-foreground' : 'text-secondary-foreground',
+                      )}
+                    >
+                      <span className={cn('size-2 shrink-0 rounded-full', SWATCH[s])} />
+                      {s}
+                      {status === s && (
+                        <svg className="ml-auto size-3.5 text-foreground" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 8l3.5 3.5 6.5-7" />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
           <button className="inline-flex size-8.5 cursor-pointer items-center justify-center rounded-[9px] border border-[#ddd7c7] text-secondary-foreground transition-colors hover:bg-card hover:text-foreground">
             <svg className="size-3.5" viewBox="0 0 16 16" fill="currentColor">
               <circle cx="3" cy="8" r="1.3" />
