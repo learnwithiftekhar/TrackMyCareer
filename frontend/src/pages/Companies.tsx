@@ -468,15 +468,6 @@ export default function Companies() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              className="gap-[7px] rounded-[9px] border-[#ddd7c7] text-[13.5px]"
-            >
-              <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M8 3v8M5 8l3 3 3-3M3 13h10" />
-              </svg>
-              Export
-            </Button>
             <Button onClick={() => setShowModal(true)} className="gap-[7px] rounded-[9px] text-[13.5px]">
               <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
                 <path d="M8 3v10M3 8h10" />
@@ -484,29 +475,6 @@ export default function Companies() {
               Add company
             </Button>
           </div>
-        </section>
-
-        {/* Summary band */}
-        <section className="mb-7 grid grid-cols-4 overflow-hidden rounded-[14px] border border-border bg-card shadow-[0_1px_0_rgba(31,29,26,.02),0_1px_2px_rgba(31,29,26,.03)]">
-          {[
-            { label: 'Tracked',       val: String(companies.length).padStart(2, '0'), sub: 'Total companies' },
-            { label: 'Active pipeline', val: '—',  sub: 'Companies with open apps' },
-            { label: 'In interview',  val: '—',  sub: 'Across open roles' },
-            { label: 'Avg response',  val: '—',  sub: 'First reply after applying' },
-          ].map((cell, i, arr) => (
-            <div
-              key={cell.label}
-              className={cn('px-5.5 pt-4.5 pb-5', i < arr.length - 1 && 'border-r border-border')}
-            >
-              <div className="mb-2.5 text-[12px] font-medium uppercase tracking-[0.06em] text-muted-foreground">
-                {cell.label}
-              </div>
-              <div className="font-mono text-[24px] font-medium leading-none tracking-[-0.03em] text-foreground">
-                {cell.val}
-              </div>
-              <div className="mt-1.5 text-[12px] text-muted-foreground">{cell.sub}</div>
-            </div>
-          ))}
         </section>
 
         {/* Toolbar */}
