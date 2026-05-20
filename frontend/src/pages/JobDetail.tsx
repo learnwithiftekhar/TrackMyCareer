@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { getJob, type JobDetail as JobDetailData, type NoteSummary } from '@/api/jobs';
 
@@ -173,6 +173,8 @@ function DetailRow({
 
 export default function JobDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [job, setJob] = useState<JobDetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -180,6 +182,15 @@ export default function JobDetail() {
   const [noteText, setNoteText] = useState('');
   const [localNotes, setLocalNotes] = useState<NoteSummary[]>([]);
   const [notesReady, setNotesReady] = useState(false);
+  const [savedBanner, setSavedBanner] = useState(() => !!(location.state as { saved?: boolean } | null)?.saved);
+
+  useEffect(() => {
+    if (savedBanner) {
+      window.history.replaceState({}, '');
+      const t = setTimeout(() => setSavedBanner(false), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [savedBanner]);
 
   useEffect(() => {
     if (!id) return;
@@ -242,6 +253,16 @@ export default function JobDetail() {
   return (
     <main className="mx-auto max-w-[1180px] px-8 py-7 pb-20">
 
+      {savedBanner && (
+        <div className="mb-5 flex items-center gap-2.5 rounded-[10px] border border-[#b7dfca] bg-[#edf7f2] px-4 py-2.5 text-[13.5px] font-medium text-[#1e6b46]">
+          <svg className="size-4 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="8" cy="8" r="6" />
+            <path d="M5.5 8.5l1.8 1.8 3.2-4" />
+          </svg>
+          Application updated successfully.
+        </div>
+      )}
+
       {/* Breadcrumb */}
       <nav className="mb-5.5 flex items-center gap-2 text-[13px] text-muted-foreground">
         <Link to="/jobs" className="text-muted-foreground no-underline transition-colors hover:text-secondary-foreground">
@@ -303,7 +324,10 @@ export default function JobDetail() {
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <button className="inline-flex cursor-pointer items-center gap-1.5 rounded-[9px] border border-[#ddd7c7] bg-transparent px-3.5 py-2 text-[13.5px] font-medium text-secondary-foreground transition-colors hover:bg-card hover:text-foreground">
+          <button
+            onClick={() => navigate(`/jobs/${id}/edit`)}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-[9px] border border-[#ddd7c7] bg-transparent px-3.5 py-2 text-[13.5px] font-medium text-secondary-foreground transition-colors hover:bg-card hover:text-foreground"
+          >
             <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 13h2.5L13 5.5 10.5 3 3 10.5z" />
             </svg>

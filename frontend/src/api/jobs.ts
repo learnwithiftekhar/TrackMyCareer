@@ -99,3 +99,13 @@ export async function createJob(data: JobCreateRequest): Promise<Job> {
   if (!res.ok) throw new Error('Failed to create job');
   return res.json();
 }
+
+export async function updateJob(id: number, data: JobCreateRequest): Promise<Job> {
+  const res = await fetch(`${BASE}/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to update job');
+  return res.json();
+}
