@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { getJobs, type Job } from '@/api/jobs';
-import { createInterview } from '@/api/interviews';
+import { getInterview, updateInterview, deleteInterview } from '@/api/interviews';
 
 const QUICK_ROUNDS = ['Phone Screen', 'Technical', 'System Design', 'Hiring Manager', 'Portfolio', 'Onsite / Final'];
 
@@ -19,36 +19,47 @@ function jobLabel(job: Job) {
   return `${job.jobTitle} — ${job.companyName}`;
 }
 
-export default function NewInterview() {
+export default function EditInterview() {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const preselectedJobId = searchParams.get('jobId') ? Number(searchParams.get('jobId')) : null;
 
   const [form, setForm] = useState<FormState>({
     roundName: '',
     interviewDate: '',
     notes: '',
-    jobId: preselectedJobId,
+    jobId: null,
     jobSearch: '',
   });
   const [jobs, setJobs] = useState<Job[]>([]);
   const [jobDropdownOpen, setJobDropdownOpen] = useState(false);
   const [jobDropdownPos, setJobDropdownPos] = useState({ top: 0, left: 0, width: 0 });
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ roundName?: string; jobId?: string }>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const inputWrapperRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    getJobs({ size: 200 }).then((page) => {
+    Promise.all([
+      getInterview(Number(id)),
+      getJobs({ size: 200 }),
+    ]).then(([interview, page]) => {
       setJobs(page.content);
-      if (preselectedJobId) {
-        const found = page.content.find((j) => j.id === preselectedJobId);
-        if (found) set('jobSearch', jobLabel(found));
-      }
-    }).catch(() => {});
-  }, []);
+      const matchedJob = page.content.find((j) => j.id === interview.jobId);
+      setForm({
+        roundName: interview.roundName,
+        interviewDate: interview.interviewDate ?? '',
+        notes: interview.notes ?? '',
+        jobId: interview.jobId,
+        jobSearch: matchedJob ? jobLabel(matchedJob) : `Job #${interview.jobId}`,
+      });
+    }).catch((e) => setLoadError(e.message))
+      .finally(() => setLoading(false));
+  }, [id]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -100,7 +111,7 @@ export default function NewInterview() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      await createInterview({
+      await updateInterview(Number(id), {
         roundName: form.roundName.trim(),
         interviewDate: form.interviewDate || null,
         notes: form.notes || null,
@@ -108,10 +119,43 @@ export default function NewInterview() {
       });
       navigate('/interviews');
     } catch {
-      setSubmitError('Failed to schedule interview. Please try again.');
+      setSubmitError('Failed to save changes. Please try again.');
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      await deleteInterview(Number(id));
+      navigate('/interviews');
+    } catch {
+      setSubmitError('Failed to delete interview. Please try again.');
+      setShowDeleteConfirm(false);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <main className="mx-auto max-w-[880px] px-8 py-7">
+        <div className="h-8 w-48 animate-pulse rounded bg-card" />
+        <div className="mt-6 space-y-4">
+          {[1, 2, 3].map((i) => <div key={i} className="h-14 animate-pulse rounded-[14px] bg-card border border-border" />)}
+        </div>
+      </main>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <main className="mx-auto max-w-[880px] px-8 py-7">
+        <p className="text-[14px] text-red-500">Failed to load interview: {loadError}</p>
+        <Link to="/interviews" className="mt-4 text-[13px] text-indigo underline">← Back to interviews</Link>
+      </main>
+    );
   }
 
   return (
@@ -125,18 +169,54 @@ export default function NewInterview() {
         <svg className="size-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M6 4l4 4-4 4" />
         </svg>
-        <span className="text-secondary-foreground">Schedule interview</span>
+        <span className="text-secondary-foreground">Edit interview</span>
       </nav>
 
       {/* Page header */}
-      <section className="mb-7">
-        <h1 className="mb-1 text-[30px] font-semibold leading-none tracking-[-0.02em] text-foreground">
-          Schedule interview
-        </h1>
-        <p className="text-[14px] text-muted-foreground">
-          Log an upcoming round so you can track outcomes and keep your pipeline accurate.
-        </p>
+      <section className="mb-7 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="mb-1 text-[30px] font-semibold leading-none tracking-[-0.02em] text-foreground">
+            Edit interview
+          </h1>
+          <p className="text-[14px] text-muted-foreground">Update the details for this round.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowDeleteConfirm(true)}
+          className="mt-1 inline-flex cursor-pointer items-center gap-1.5 rounded-[9px] border border-[#f3d0cc] bg-[#fef2f2] px-3 py-2 text-[13px] font-medium text-[#b04a3f] transition-colors hover:bg-[#fde8e6]"
+        >
+          <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 5h10M6 5V3.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V5M6 8v4M10 8v4M4.5 5l.5 8h6l.5-8" />
+          </svg>
+          Delete
+        </button>
       </section>
+
+      {/* Delete confirmation */}
+      {showDeleteConfirm && (
+        <div className="mb-6 flex items-center justify-between gap-4 rounded-[12px] border border-[#f3d0cc] bg-[#fef2f2] px-5 py-4">
+          <p className="text-[13.5px] text-[#7c2d2d]">
+            Delete this interview? This cannot be undone.
+          </p>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(false)}
+              className="cursor-pointer rounded-[8px] border border-[#f3d0cc] bg-transparent px-3 py-1.5 text-[13px] font-medium text-[#7c2d2d] transition-colors hover:bg-[#fde8e6]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={deleting}
+              className="cursor-pointer rounded-[8px] bg-[#b04a3f] px-3 py-1.5 text-[13px] font-medium text-white transition-colors hover:bg-[#8f3a31] disabled:opacity-60"
+            >
+              {deleting ? 'Deleting…' : 'Yes, delete'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── JOB ── */}
       <Section title="Application" aside={<>Required fields marked <span className="text-indigo">*</span></>}>
@@ -172,9 +252,7 @@ export default function NewInterview() {
                 className="overflow-hidden rounded-[10px] border border-border bg-card shadow-[0_4px_16px_-8px_rgba(31,29,26,.18)]"
               >
                 {filteredJobs.length === 0 ? (
-                  <div className="px-4 py-3 text-[13px] text-muted-foreground">
-                    No jobs found. <Link to="/jobs/new" className="text-indigo underline">Add one first</Link>
-                  </div>
+                  <div className="px-4 py-3 text-[13px] text-muted-foreground">No jobs found.</div>
                 ) : (
                   <ul className="max-h-52 overflow-y-auto py-1">
                     {filteredJobs.map((j) => (
@@ -284,7 +362,7 @@ export default function NewInterview() {
           {submitError ? (
             <span className="text-red-500">{submitError}</span>
           ) : (
-            <span className="text-muted-foreground">Fill in the details above</span>
+            <span className="text-muted-foreground">Update the details above</span>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -302,7 +380,7 @@ export default function NewInterview() {
             disabled={submitting}
             className="inline-flex cursor-pointer items-center gap-2 rounded-[9px] bg-foreground px-3.5 py-2 text-[13.5px] font-medium text-background transition-colors hover:bg-[#2d2a26] disabled:opacity-60"
           >
-            {submitting ? 'Saving…' : 'Schedule interview'}
+            {submitting ? 'Saving…' : 'Save changes'}
           </button>
         </div>
       </div>

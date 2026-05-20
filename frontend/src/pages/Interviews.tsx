@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { getInterviews, type Interview } from '@/api/interviews';
+import { getInterviews, deleteInterview, type Interview } from '@/api/interviews';
 
 type ViewTab = 'Upcoming' | 'Past' | 'All';
 
@@ -44,18 +45,36 @@ function companyColor(name: string): string {
 }
 
 export default function Interviews() {
+  const navigate = useNavigate();
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<ViewTab>('Upcoming');
   const [search, setSearch] = useState('');
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
-  useEffect(() => {
-    getInterviews()
+  function load() {
+    return getInterviews()
       .then(setInterviews)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, []);
+  }
+
+  useEffect(() => { load(); }, []);
+
+  async function handleDelete(id: number) {
+    setDeletingId(id);
+    try {
+      await deleteInterview(id);
+      setInterviews((prev) => prev.filter((iv) => iv.id !== id));
+      setConfirmDeleteId(null);
+    } catch {
+      /* leave confirm open so user can retry */
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   const today = useMemo(() => {
     const d = new Date();
@@ -217,7 +236,18 @@ export default function Interviews() {
       ) : groups.length === 0 ? (
         <EmptyState query={search} />
       ) : (
-        groups.map((group) => <DaySection key={group.key} group={group} />)
+        groups.map((group) => (
+          <DaySection
+            key={group.key}
+            group={group}
+            onEdit={(id) => navigate(`/interviews/${id}/edit`)}
+            onDeleteRequest={(id) => setConfirmDeleteId(id)}
+            confirmDeleteId={confirmDeleteId}
+            deletingId={deletingId}
+            onDeleteConfirm={handleDelete}
+            onDeleteCancel={() => setConfirmDeleteId(null)}
+          />
+        ))
       )}
 
     </main>
@@ -226,7 +256,17 @@ export default function Interviews() {
 
 /* ── Day section ── */
 
-function DaySection({ group }: { group: DayGroup }) {
+interface DaySectionProps {
+  group: DayGroup;
+  onEdit: (id: number) => void;
+  onDeleteRequest: (id: number) => void;
+  confirmDeleteId: number | null;
+  deletingId: number | null;
+  onDeleteConfirm: (id: number) => void;
+  onDeleteCancel: () => void;
+}
+
+function DaySection({ group, onEdit, onDeleteRequest, confirmDeleteId, deletingId, onDeleteConfirm, onDeleteCancel }: DaySectionProps) {
   return (
     <section className="mb-7">
       <header className="mb-3 flex items-baseline gap-3 px-1">
@@ -246,7 +286,23 @@ function DaySection({ group }: { group: DayGroup }) {
 
       <div className="overflow-hidden rounded-[14px] border border-border bg-card shadow-[0_1px_0_rgba(31,29,26,.02),0_1px_2px_rgba(31,29,26,.03)]">
         {group.interviews.map((iv) => (
-          <InterviewRow key={iv.id} iv={iv} isPast={!!group.isPast} />
+          confirmDeleteId === iv.id ? (
+            <DeleteConfirmRow
+              key={iv.id}
+              iv={iv}
+              deleting={deletingId === iv.id}
+              onConfirm={() => onDeleteConfirm(iv.id)}
+              onCancel={onDeleteCancel}
+            />
+          ) : (
+            <InterviewRow
+              key={iv.id}
+              iv={iv}
+              isPast={!!group.isPast}
+              onEdit={() => onEdit(iv.id)}
+              onDeleteRequest={() => onDeleteRequest(iv.id)}
+            />
+          )
         ))}
       </div>
     </section>
@@ -255,12 +311,53 @@ function DaySection({ group }: { group: DayGroup }) {
 
 /* ── Interview row ── */
 
-function InterviewRow({ iv, isPast }: { iv: Interview; isPast: boolean }) {
+function InterviewRow({ iv, isPast, onEdit, onDeleteRequest }: {
+  iv: Interview;
+  isPast: boolean;
+  onEdit: () => void;
+  onDeleteRequest: () => void;
+}) {
+  const navigate = useNavigate();
   const color = companyColor(iv.companyName);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      const target = e.target as Node;
+      if (
+        menuRef.current && !menuRef.current.contains(target) &&
+        btnRef.current && !btnRef.current.contains(target)
+      ) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpen]);
+
+  function openMenu() {
+    if (btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setMenuPos({
+        top: rect.bottom + 6,
+        right: window.innerWidth - rect.right,
+      });
+    }
+    setMenuOpen(true);
+  }
+
   return (
-    <div className={cn(
-      'grid cursor-default items-center gap-4 border-b border-border px-5 py-4 transition-colors last:border-b-0 hover:bg-[#fbfaf6]',
-    )} style={{ gridTemplateColumns: '36px 1fr auto' }}>
+    <div
+      onClick={() => navigate(`/interviews/${iv.id}`)}
+      className={cn(
+        'grid cursor-pointer items-center gap-4 border-b border-border px-5 py-4 transition-colors last:border-b-0 hover:bg-[#fbfaf6]',
+      )}
+      style={{ gridTemplateColumns: '36px 1fr auto auto' }}
+    >
 
       {/* Avatar */}
       <div
@@ -298,6 +395,80 @@ function InterviewRow({ iv, isPast }: { iv: Interview; isPast: boolean }) {
         )}
       </div>
 
+      {/* Kebab button */}
+      <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+        <button
+          ref={btnRef}
+          onClick={() => menuOpen ? setMenuOpen(false) : openMenu()}
+          className="inline-flex cursor-pointer rounded-[6px] p-1.5 text-muted-foreground/60 transition-colors hover:bg-background hover:text-secondary-foreground"
+        >
+          <svg className="size-3.5" viewBox="0 0 16 16" fill="currentColor">
+            <circle cx="3" cy="8" r="1.3" /><circle cx="8" cy="8" r="1.3" /><circle cx="13" cy="8" r="1.3" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Dropdown — rendered in a portal to escape overflow:hidden */}
+      {menuOpen && createPortal(
+        <div
+          ref={menuRef}
+          style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, zIndex: 50 }}
+          className="min-w-[130px] overflow-hidden rounded-[10px] border border-border bg-card shadow-[0_4px_16px_-8px_rgba(31,29,26,.18)]"
+        >
+          <button
+            onClick={() => { setMenuOpen(false); onEdit(); }}
+            className="flex w-full cursor-pointer items-center gap-2 px-3.5 py-2.5 text-left text-[13px] text-foreground transition-colors hover:bg-background"
+          >
+            <svg className="size-3.5 text-muted-foreground" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11.5 2.5a2.12 2.12 0 0 1 3 3L5 15H2v-3L11.5 2.5z" />
+            </svg>
+            Edit
+          </button>
+          <button
+            onClick={() => { setMenuOpen(false); onDeleteRequest(); }}
+            className="flex w-full cursor-pointer items-center gap-2 px-3.5 py-2.5 text-left text-[13px] text-[#b04a3f] transition-colors hover:bg-[#fef2f2]"
+          >
+            <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 5h10M6 5V3.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V5M6 8v4M10 8v4M4.5 5l.5 8h6l.5-8" />
+            </svg>
+            Delete
+          </button>
+        </div>,
+        document.body,
+      )}
+
+    </div>
+  );
+}
+
+/* ── Delete confirm row ── */
+
+function DeleteConfirmRow({ iv, deleting, onConfirm, onCancel }: {
+  iv: Interview;
+  deleting: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 border-b border-border bg-[#fef2f2] px-5 py-4 last:border-b-0">
+      <p className="text-[13.5px] text-[#7c2d2d]">
+        Delete <strong className="font-medium">{iv.roundName}</strong>? This cannot be undone.
+      </p>
+      <div className="flex items-center gap-2 shrink-0">
+        <button
+          onClick={onCancel}
+          className="cursor-pointer rounded-[8px] border border-[#f3d0cc] bg-transparent px-3 py-1.5 text-[13px] font-medium text-[#7c2d2d] transition-colors hover:bg-[#fde8e6]"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={onConfirm}
+          disabled={deleting}
+          className="cursor-pointer rounded-[8px] bg-[#b04a3f] px-3 py-1.5 text-[13px] font-medium text-white transition-colors hover:bg-[#8f3a31] disabled:opacity-60"
+        >
+          {deleting ? 'Deleting…' : 'Delete'}
+        </button>
+      </div>
     </div>
   );
 }

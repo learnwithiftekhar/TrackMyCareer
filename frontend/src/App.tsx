@@ -8,6 +8,8 @@ import EditJob from './pages/EditJob';
 import Companies from './pages/Companies';
 import Interviews from './pages/Interviews';
 import NewInterview from './pages/NewInterview';
+import EditInterview from './pages/EditInterview';
+import InterviewDetail from './pages/InterviewDetail';
 
 export default function App() {
   return (
@@ -22,6 +24,8 @@ export default function App() {
         <Route path="/companies" element={<Companies />} />
         <Route path="/interviews" element={<Interviews />} />
         <Route path="/interviews/new" element={<NewInterview />} />
+        <Route path="/interviews/:id" element={<InterviewDetail />} />
+        <Route path="/interviews/:id/edit" element={<EditInterview />} />
       </Routes>
     </BrowserRouter>
   );
