@@ -22,6 +22,16 @@ export async function createCompany(data: { companyName: string; about?: string 
   return res.json();
 }
 
+export async function updateCompany(id: number, data: { companyName: string; about?: string }): Promise<Company> {
+  const res = await fetch(`${BASE}/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to update company');
+  return res.json();
+}
+
 export async function deleteCompany(id: number): Promise<void> {
   const res = await fetch(`${BASE}/${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error('Failed to delete company');
