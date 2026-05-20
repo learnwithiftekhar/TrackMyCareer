@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getJobs, getStatusCounts, type Job, type StatusCounts } from '@/api/jobs';
@@ -116,6 +116,11 @@ function SkeletonRows() {
 }
 
 export default function AllJobs() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const companyIdParam = searchParams.get('companyId');
+  const companyNameParam = searchParams.get('companyName');
+  const companyIdFilter = companyIdParam ? Number(companyIdParam) : undefined;
+
   const [activeFilter, setActiveFilter] = useState('All');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -142,7 +147,12 @@ export default function AllJobs() {
     getStatusCounts().then(setStatusCounts).catch(() => {});
   }, []);
 
-  // Fetch jobs on page/filter/search/sort change
+  // Reset page when company filter changes
+  useEffect(() => {
+    setPage(0);
+  }, [companyIdFilter]);
+
+  // Fetch jobs on page/filter/search/sort/company change
   useEffect(() => {
     setLoading(true);
     getJobs({
@@ -152,6 +162,7 @@ export default function AllJobs() {
       status: activeFilter === 'All' ? undefined : activeFilter,
       sortBy,
       sortDir,
+      companyId: companyIdFilter,
     })
       .then((data) => {
         setJobs(data.content);
@@ -160,10 +171,15 @@ export default function AllJobs() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [page, debouncedSearch, activeFilter, sortBy, sortDir]);
+  }, [page, debouncedSearch, activeFilter, sortBy, sortDir, companyIdFilter]);
 
   function handleFilterChange(filter: string) {
     setActiveFilter(filter);
+    setPage(0);
+  }
+
+  function clearCompanyFilter() {
+    setSearchParams({});
     setPage(0);
   }
 
@@ -279,6 +295,27 @@ export default function AllJobs() {
           );
         })}
       </section>
+
+      {/* Company filter banner */}
+      {companyIdFilter != null && companyNameParam && (
+        <section className="mb-3.5 flex items-center gap-2.5 rounded-[10px] border border-[#ddd7c7] bg-card px-4 py-2.5">
+          <svg className="size-3.5 shrink-0 text-muted-foreground" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2 4h12M5 8h6M7 12h2" />
+          </svg>
+          <span className="text-[13px] text-secondary-foreground">
+            Filtered by company: <strong className="font-semibold text-foreground">{companyNameParam}</strong>
+          </span>
+          <button
+            onClick={clearCompanyFilter}
+            className="ml-auto inline-flex items-center gap-1 rounded-[7px] border border-[#ddd7c7] bg-background px-2.5 py-1 text-[12px] text-muted-foreground transition-colors hover:border-[#c0bbb0] hover:text-foreground"
+          >
+            <svg className="size-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              <path d="M4 4l8 8M12 4l-8 8" />
+            </svg>
+            Clear filter
+          </button>
+        </section>
+      )}
 
       {/* Table card */}
       <section className="overflow-hidden rounded-[14px] border border-border bg-card shadow-[0_1px_0_rgba(31,29,26,.02),0_1px_2px_rgba(31,29,26,.03)]">

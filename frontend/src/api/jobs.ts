@@ -52,6 +52,7 @@ export async function getJobs(params: {
   status?: string;
   sortBy?: string;
   sortDir?: 'asc' | 'desc';
+  companyId?: number;
 }): Promise<JobPage> {
   const url = new URL(BASE);
   if (params.page != null) url.searchParams.set('page', String(params.page));
@@ -60,6 +61,7 @@ export async function getJobs(params: {
   if (params.status) url.searchParams.set('status', params.status);
   if (params.sortBy) url.searchParams.set('sortBy', params.sortBy);
   if (params.sortDir) url.searchParams.set('sortDir', params.sortDir);
+  if (params.companyId != null) url.searchParams.set('companyId', String(params.companyId));
   const res = await fetch(url.toString());
   if (!res.ok) throw new Error('Failed to fetch jobs');
   return res.json();

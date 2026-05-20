@@ -22,6 +22,16 @@ public interface JobRepository extends JpaRepository<Job, Long> {
            "AND j.appliedStatus = :status")
     Page<Job> searchJobsByStatus(@Param("search") String search, @Param("status") AppliedStatus status, Pageable pageable);
 
+    @Query("SELECT j FROM Job j JOIN j.company c " +
+           "WHERE (LOWER(j.jobTitle) LIKE LOWER(:search) OR LOWER(c.companyName) LIKE LOWER(:search)) " +
+           "AND c.id = :companyId")
+    Page<Job> searchJobsByCompany(@Param("search") String search, @Param("companyId") Long companyId, Pageable pageable);
+
+    @Query("SELECT j FROM Job j JOIN j.company c " +
+           "WHERE (LOWER(j.jobTitle) LIKE LOWER(:search) OR LOWER(c.companyName) LIKE LOWER(:search)) " +
+           "AND j.appliedStatus = :status AND c.id = :companyId")
+    Page<Job> searchJobsByStatusAndCompany(@Param("search") String search, @Param("status") AppliedStatus status, @Param("companyId") Long companyId, Pageable pageable);
+
     @Query("SELECT j.appliedStatus, COUNT(j) FROM Job j GROUP BY j.appliedStatus")
     List<Object[]> countByStatus();
 

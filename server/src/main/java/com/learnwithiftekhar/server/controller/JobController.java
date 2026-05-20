@@ -27,8 +27,9 @@ public class JobController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "deadline") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDir) {
-        return jobService.getJobs(page, size, search, status, sortBy, sortDir);
+            @RequestParam(defaultValue = "asc") String sortDir,
+            @RequestParam(required = false) Long companyId) {
+        return jobService.getJobs(page, size, search, status, sortBy, sortDir, companyId);
     }
 
     @GetMapping("/status/count")

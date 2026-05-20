@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getCompanies, createCompany, deleteCompany, type Company } from '@/api/companies';
@@ -154,15 +155,19 @@ function AddCompanyModal({ onClose, onSave }: AddModalProps) {
 interface CompanyCardProps {
   company: Company;
   onDelete: (id: number) => void;
+  onNavigate: (id: number, name: string) => void;
 }
 
-function CompanyCard({ company, onDelete }: CompanyCardProps) {
+function CompanyCard({ company, onDelete, onNavigate }: CompanyCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { bg, color } = avatarStyle(company.id);
   const letter = company.companyName.charAt(0).toUpperCase();
 
   return (
-    <div className="relative flex min-h-[192px] flex-col rounded-[14px] border border-border bg-card p-[18px_20px_16px] shadow-[0_1px_0_rgba(31,29,26,.02),0_1px_2px_rgba(31,29,26,.03)] transition-[border-color,transform] duration-150 hover:-translate-y-px hover:border-[#ddd7c7]">
+    <div
+      onClick={() => onNavigate(company.id, company.companyName)}
+      className="relative flex min-h-[192px] cursor-pointer flex-col rounded-[14px] border border-border bg-card p-[18px_20px_16px] shadow-[0_1px_0_rgba(31,29,26,.02),0_1px_2px_rgba(31,29,26,.03)] transition-[border-color,transform] duration-150 hover:-translate-y-px hover:border-[#ddd7c7]"
+    >
       {/* Top row */}
       <div className="mb-3.5 flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
@@ -186,7 +191,7 @@ function CompanyCard({ company, onDelete }: CompanyCardProps) {
         </div>
 
         {/* Action menu */}
-        <div className="relative shrink-0">
+        <div className="relative shrink-0" onClick={e => e.stopPropagation()}>
           <button
             onClick={() => setMenuOpen(v => !v)}
             className="grid size-6 place-items-center rounded-md text-muted-foreground/60 transition-colors hover:bg-background hover:text-muted-foreground"
@@ -252,6 +257,7 @@ function AddCard({ onClick }: { onClick: () => void }) {
 // ── Main Page ────────────────────────────────────────────────────────────────
 
 export default function Companies() {
+  const navigate = useNavigate();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -272,6 +278,10 @@ export default function Companies() {
     if (!confirm('Delete this company?')) return;
     await deleteCompany(id);
     setCompanies(prev => prev.filter(c => c.id !== id));
+  }
+
+  function handleNavigate(id: number, name: string) {
+    navigate(`/jobs?companyId=${id}&companyName=${encodeURIComponent(name)}`);
   }
 
   const filtered = companies.filter(c =>
@@ -378,7 +388,7 @@ export default function Companies() {
         ) : (
           <section className="grid grid-cols-3 gap-4">
             {filtered.map(company => (
-              <CompanyCard key={company.id} company={company} onDelete={handleDelete} />
+              <CompanyCard key={company.id} company={company} onDelete={handleDelete} onNavigate={handleNavigate} />
             ))}
             <AddCard onClick={() => setShowModal(true)} />
           </section>

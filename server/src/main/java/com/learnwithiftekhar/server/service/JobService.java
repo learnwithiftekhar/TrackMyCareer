@@ -35,20 +35,28 @@ public class JobService {
     private static final java.util.Set<String> ALLOWED_SORT_FIELDS = java.util.Set.of("deadline", "createdAt");
 
     @Transactional(readOnly = true)
-    public Page<JobResponse> getJobs(int page, int size, String search, String status, String sortBy, String sortDir) {
+    public Page<JobResponse> getJobs(int page, int size, String search, String status, String sortBy, String sortDir, Long companyId) {
         String field = ALLOWED_SORT_FIELDS.contains(sortBy) ? sortBy : "deadline";
         Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
         PageRequest pageable = PageRequest.of(page, size, Sort.by(direction, field));
         String searchParam = (search == null || search.isBlank()) ? "%" : "%" + search.trim() + "%";
-        if (status == null || status.isBlank()) {
-            return jobRepository.searchJobs(searchParam, pageable).map(this::toResponse);
+        boolean hasStatus = status != null && !status.isBlank();
+        boolean hasCompany = companyId != null;
+        if (hasStatus) {
+            try {
+                AppliedStatus appliedStatus = AppliedStatus.valueOf(status);
+                if (hasCompany) {
+                    return jobRepository.searchJobsByStatusAndCompany(searchParam, appliedStatus, companyId, pageable).map(this::toResponse);
+                }
+                return jobRepository.searchJobsByStatus(searchParam, appliedStatus, pageable).map(this::toResponse);
+            } catch (IllegalArgumentException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status: " + status);
+            }
         }
-        try {
-            AppliedStatus appliedStatus = AppliedStatus.valueOf(status);
-            return jobRepository.searchJobsByStatus(searchParam, appliedStatus, pageable).map(this::toResponse);
-        } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status: " + status);
+        if (hasCompany) {
+            return jobRepository.searchJobsByCompany(searchParam, companyId, pageable).map(this::toResponse);
         }
+        return jobRepository.searchJobs(searchParam, pageable).map(this::toResponse);
     }
 
     @Transactional(readOnly = true)
