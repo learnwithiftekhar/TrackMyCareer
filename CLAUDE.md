@@ -36,7 +36,7 @@ TrackMyCareer/
 The backend reads secrets from environment variables. Create `server/.env`:
 
 ```
-OPEN_AI_KEY=sk-...
+OPENAI_API_KEY=sk-proj-example-not-a-real-key
 ```
 
 Spring Boot does **not** load `.env` files automatically. Before running the server, export the variable in your shell:
@@ -104,7 +104,7 @@ CORS is configured to allow requests from `http://localhost:5173` in dev.
 2. Spring AI `ChatClient` sends the text to `gpt-4o-mini` and maps the response directly to `AutofillResponse` via `.entity(AutofillResponse.class)`.
 3. Returns: `jobTitle`, `companyName`, `jobDescription`, `salaryRange`, `jobSource`.
 
-Returns `503` if `OPEN_AI_KEY` is not set.
+Returns `503` if `OPENAI_API_KEY` is not set.
 
 ### Error Handling
 All errors return a consistent JSON shape:
