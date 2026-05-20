@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { getCompanies, type Company } from '@/api/companies';
 import { autofillFromUrl, createJob, generateCoverLetter } from '@/api/jobs';
+import { AddCompanyModal } from '@/components/AddCompanyModal';
 
 type Status = 'Wishlist' | 'Applied' | 'Interview' | 'Offer' | 'Rejected';
 
@@ -68,6 +69,7 @@ export default function NewApplication() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [generatingCoverLetter, setGeneratingCoverLetter] = useState(false);
   const [coverLetterError, setCoverLetterError] = useState<string | null>(null);
+  const [showAddCompany, setShowAddCompany] = useState(false);
   const companyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -97,6 +99,12 @@ export default function NewApplication() {
     setForm((f) => ({ ...f, companyId: company.id, companySearch: company.companyName }));
     setErrors((e) => ({ ...e, companyId: undefined }));
     setCompanyDropdownOpen(false);
+  }
+
+  function handleCompanyAdded(company: Company) {
+    setCompanies((prev) => [...prev, company]);
+    selectCompany(company);
+    setShowAddCompany(false);
   }
 
   function validate() {
@@ -190,6 +198,7 @@ export default function NewApplication() {
   const bg     = form.companySearch ? avatarBg(letter) : '#b3afa3';
 
   return (
+    <>
     <main className="mx-auto max-w-[880px] px-8 py-7 pb-24">
 
       {/* Breadcrumb */}
@@ -306,7 +315,13 @@ export default function NewApplication() {
                   {filteredCompanies.length === 0 ? (
                     <div className="px-4 py-3 text-[13px] text-muted-foreground">
                       No companies found.{' '}
-                      <Link to="/companies" className="text-indigo underline">Add one first</Link>
+                      <button
+                        type="button"
+                        onMouseDown={(e) => { e.preventDefault(); setCompanyDropdownOpen(false); setShowAddCompany(true); }}
+                        className="cursor-pointer text-indigo underline"
+                      >
+                        Add one now
+                      </button>
                     </div>
                   ) : (
                     <ul className="max-h-48 overflow-y-auto py-1">
@@ -601,6 +616,14 @@ export default function NewApplication() {
       </div>
 
     </main>
+
+    {showAddCompany && (
+      <AddCompanyModal
+        onClose={() => setShowAddCompany(false)}
+        onSave={handleCompanyAdded}
+      />
+    )}
+    </>
   );
 }
 

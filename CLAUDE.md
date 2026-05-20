@@ -75,7 +75,7 @@ bun run lint                 # lint
 Standard Spring Boot layered architecture: `Controller → Service → Repository`.
 
 - `controller/` — REST controllers: `JobController`, `CompanyController`, `DashboardController`, `HelloController`
-- `service/` — business logic; `AutofillService` handles AI-powered job detail extraction
+- `service/` — business logic; `AutofillService` handles AI-powered job detail extraction and cover letter generation
 - `repository/` — Spring Data JPA repositories; custom JPQL queries for search, status counts, and date-range lookups
 - `model/` — JPA entities
 - `dto/` — request/response DTOs (never expose entities directly); `DashboardSummaryResponse` aggregates status counts, upcoming deadlines, and upcoming interviews in one call
@@ -91,20 +91,27 @@ CORS is configured to allow requests from `http://localhost:5173` in dev.
 | GET | `/api/jobs/status/count` | Status counts map |
 | GET | `/api/jobs/by-url?url=` | Look up a job by its saved `job_url` field |
 | POST | `/api/jobs/autofill` | Fetch a URL with Jsoup, extract job details via OpenAI, return prefill data |
+| POST | `/api/jobs/cover-letter` | Generate a cover letter draft via OpenAI from job title, company, and description |
 | GET/POST | `/api/jobs/{id}` | Get / create / update / delete a job |
 | GET/POST | `/api/companies` | List / create companies |
 | GET/PUT/DELETE | `/api/companies/{id}` | Get / update / delete a company |
 | GET/POST | `/api/interviews` | List (optionally filter by `?jobId=`) / create interviews |
 | GET/PUT/DELETE | `/api/interviews/{id}` | Get / update / delete an interview |
 
-#### AI Autofill (`AutofillService`)
-`POST /api/jobs/autofill` body: `{ "url": "https://..." }`
+#### AI Features (`AutofillService`)
+
+**`POST /api/jobs/autofill`** body: `{ "url": "https://..." }`
 
 1. Jsoup fetches the URL and extracts up to 8000 chars of body text.
 2. Spring AI `ChatClient` sends the text to `gpt-4o-mini` and maps the response directly to `AutofillResponse` via `.entity(AutofillResponse.class)`.
 3. Returns: `jobTitle`, `companyName`, `jobDescription`, `salaryRange`, `jobSource`.
 
-Returns `503` if `OPENAI_API_KEY` is not set.
+**`POST /api/jobs/cover-letter`** body: `{ "jobTitle": "...", "companyName": "...", "jobDescription": "..." }`
+
+1. Spring AI `ChatClient` prompts `gpt-4o-mini` to write 3–4 body paragraphs (no salutation or address block).
+2. Returns: `{ "coverLetter": "..." }`.
+
+Both endpoints return `503` if `OPENAI_API_KEY` is not set.
 
 ### Error Handling
 All errors return a consistent JSON shape:
@@ -119,7 +126,7 @@ Services always use `HttpStatus.NOT_FOUND` (404) for missing entities, never `BA
 
 ### Frontend
 - `src/pages/` — one file per route: `Dashboard`, `AllJobs`, `NewApplication`, `JobDetail`, `Companies`, `Interviews`, `NewInterview`
-- `src/components/` — reusable UI components (e.g. `Navbar`)
+- `src/components/` — reusable UI components: `Navbar`, `AddCompanyModal`
 - `src/api/` — one file per backend resource (`jobs.ts`, `companies.ts`, `dashboard.ts`, `interviews.ts`); all HTTP calls live here, nowhere else
 
 Routes are defined in `App.tsx` using React Router v6. The frontend calls the backend at `http://localhost:8080/api`.
@@ -129,8 +136,12 @@ Routes are defined in `App.tsx` using React Router v6. The frontend calls the ba
 - `getJob(id)` — single job with interviews and notes
 - `getJobByUrl(url)` — look up job by its saved URL (used by New Interview autofill)
 - `autofillFromUrl(url)` — call `/api/jobs/autofill` to AI-extract job details (used by New Application)
+- `generateCoverLetter({ jobTitle, companyName?, jobDescription? })` — call `/api/jobs/cover-letter` to generate a draft (used by New Application)
 - `createJob(data)` / `updateJob(id, data)` / `deleteJob(id)`
 - `getStatusCounts()`
+
+#### Shared Components
+- `AddCompanyModal` (`src/components/AddCompanyModal.tsx`) — modal for creating a new company; used by both `Companies.tsx` (via the page-level "Add company" button) and `NewApplication.tsx` (inline when no matching company is found in the dropdown). Props: `onClose: () => void`, `onSave: (company: Company) => void`. Calls `createCompany` internally and passes the created company to `onSave`.
 
 ### UI Designs
 Static HTML mockups live in `UI Designs/`. **Always consult the relevant file before building or modifying a page or component** — these are the source of truth for layout, styling, and UX.
