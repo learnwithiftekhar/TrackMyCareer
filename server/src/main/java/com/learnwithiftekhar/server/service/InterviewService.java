@@ -26,6 +26,11 @@ public class InterviewService {
     }
 
     @Transactional(readOnly = true)
+    public List<InterviewResponse> getAllInterviews() {
+        return interviewRepository.findAllWithDetails().stream().map(this::toResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<InterviewResponse> getInterviewsByJob(Long jobId) {
         if (!jobRepository.existsById(jobId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found");

@@ -17,4 +17,8 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
     @Query("SELECT i FROM Interview i JOIN FETCH i.job j JOIN FETCH j.company " +
            "WHERE j.id = :jobId ORDER BY i.interviewDate ASC NULLS LAST")
     List<Interview> findByJobId(@Param("jobId") Long jobId);
+
+    @Query("SELECT i FROM Interview i JOIN FETCH i.job j JOIN FETCH j.company " +
+           "ORDER BY i.interviewDate ASC NULLS LAST")
+    List<Interview> findAllWithDetails();
 }

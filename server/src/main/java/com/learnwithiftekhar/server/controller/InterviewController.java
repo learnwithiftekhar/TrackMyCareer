@@ -21,8 +21,11 @@ public class InterviewController {
     }
 
     @GetMapping
-    public List<InterviewResponse> getInterviewsByJob(@RequestParam Long jobId) {
-        return interviewService.getInterviewsByJob(jobId);
+    public List<InterviewResponse> getInterviews(@RequestParam(required = false) Long jobId) {
+        if (jobId != null) {
+            return interviewService.getInterviewsByJob(jobId);
+        }
+        return interviewService.getAllInterviews();
     }
 
     @GetMapping("/{id}")
