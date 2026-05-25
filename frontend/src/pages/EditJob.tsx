@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { getCompanies, type Company } from '@/api/companies';
 import { getJob, updateJob } from '@/api/jobs';
+import { MarkdownToolbar } from '@/components/MarkdownToolbar';
 
 type Status = 'Wishlist' | 'Applied' | 'Interview' | 'Offer' | 'Rejected';
 
@@ -67,6 +68,7 @@ export default function EditJob() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const companyRef = useRef<HTMLDivElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -445,22 +447,9 @@ export default function EditJob() {
           {/* Description */}
           <Field label="Description" alignTop>
             <div>
-              <div className="flex gap-0.5 rounded-t-[8px] border border-b-0 border-border bg-[#fbfaf6] p-[6px_8px]">
-                <EditorBtn label="B" style={{ fontWeight: 700 }} />
-                <EditorBtn label="I" style={{ fontStyle: 'italic' }} />
-                <EditorBtn label="U" style={{ textDecoration: 'underline' }} />
-                <div className="mx-1 h-4 w-px self-center bg-[#ddd7c7]" />
-                <EditorBtn label="H1" />
-                <EditorBtn label="H2" />
-                <div className="mx-1 h-4 w-px self-center bg-[#ddd7c7]" />
-                <EditorBtn>
-                  <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="4" cy="5" r=".5" fill="currentColor" /><circle cx="4" cy="8" r=".5" fill="currentColor" /><circle cx="4" cy="11" r=".5" fill="currentColor" />
-                    <path d="M7 5h7M7 8h7M7 11h7" />
-                  </svg>
-                </EditorBtn>
-              </div>
+              <MarkdownToolbar textareaRef={descriptionRef} onChange={(v) => set('description', v)} />
               <textarea
+                ref={descriptionRef}
                 value={form.description}
                 onChange={(e) => set('description', e.target.value)}
                 placeholder="Paste or write the job description…"
@@ -579,17 +568,6 @@ function OptLabel() {
   return <span className="ml-1 text-[11.5px] font-normal text-muted-foreground/60">optional</span>;
 }
 
-function EditorBtn({ label, style, children }: { label?: string; style?: React.CSSProperties; children?: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      style={style}
-      className="inline-flex cursor-pointer items-center rounded-[5px] border border-transparent px-[7px] py-1 font-mono text-[12px] font-medium text-muted-foreground transition-colors hover:border-border hover:bg-card hover:text-secondary-foreground"
-    >
-      {label ?? children}
-    </button>
-  );
-}
 
 const fieldInputCls = (hasError = false) =>
   cn(
