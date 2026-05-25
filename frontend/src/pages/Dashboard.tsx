@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getDashboardSummary, type DashboardSummary } from '@/api/dashboard';
-import type { Job } from '@/api/jobs';
+import { autofillFromUrl, type Job } from '@/api/jobs';
 
 const TODAY = new Date();
 const DATE_LABEL = TODAY.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
@@ -114,8 +114,14 @@ function StatCardSkeleton() {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showUrlModal, setShowUrlModal] = useState(false);
+  const [pasteUrl, setPasteUrl] = useState('');
+  const [autofilling, setAutofilling] = useState(false);
+  const [autofillError, setAutofillError] = useState<string | null>(null);
+  const urlInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     getDashboardSummary()
@@ -123,11 +129,33 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (showUrlModal) setTimeout(() => urlInputRef.current?.focus(), 50);
+    else { setPasteUrl(''); setAutofillError(null); }
+  }, [showUrlModal]);
+
+  async function handleAutofill() {
+    const url = pasteUrl.trim();
+    if (!url) return;
+    setAutofilling(true);
+    setAutofillError(null);
+    try {
+      const result = await autofillFromUrl(url);
+      setShowUrlModal(false);
+      navigate('/jobs/new', { state: { autofill: result, url } });
+    } catch {
+      setAutofillError('Could not extract job details. Check the URL and try again.');
+    } finally {
+      setAutofilling(false);
+    }
+  }
+
   const totalApps = summary
     ? Object.values(summary.statusCounts).reduce((a, b) => a + b, 0)
     : 0;
 
   return (
+    <>
     <main className="mx-auto max-w-[1180px] px-8 py-[44px] pb-20">
 
       {/* Page header */}
@@ -336,7 +364,7 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-[7px] rounded-[9px] px-[14px] text-[13.5px]">
+          <Button variant="outline" onClick={() => setShowUrlModal(true)} className="gap-[7px] rounded-[9px] px-[14px] text-[13.5px]">
             <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M7 9l2-2a2.5 2.5 0 0 1 3.5 3.5l-2 2a2.5 2.5 0 0 1-3.5 0" />
               <path d="M9 7l-2 2a2.5 2.5 0 0 1-3.5-3.5l2-2a2.5 2.5 0 0 1 3.5 0" />
@@ -355,5 +383,59 @@ export default function Dashboard() {
       </section>
 
     </main>
+
+    {/* Paste URL modal */}
+    {showUrlModal && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px]" onClick={() => setShowUrlModal(false)}>
+        <div className="mx-4 w-full max-w-[480px] overflow-hidden rounded-[16px] border border-border bg-card shadow-[0_20px_60px_-12px_rgba(0,0,0,.25)]" onClick={e => e.stopPropagation()}>
+          <div className="px-6 pt-6 pb-4">
+            <h2 className="mb-1 text-[17px] font-semibold tracking-[-0.01em] text-foreground">Paste a job URL</h2>
+            <p className="text-[13px] text-muted-foreground">
+              We'll extract the title, company, description, and salary automatically.
+            </p>
+          </div>
+          <div className="px-6 pb-2">
+            <input
+              ref={urlInputRef}
+              type="url"
+              value={pasteUrl}
+              onChange={e => { setPasteUrl(e.target.value); setAutofillError(null); }}
+              onKeyDown={e => e.key === 'Enter' && !autofilling && handleAutofill()}
+              placeholder="https://linkedin.com/jobs/view/…"
+              className="h-[42px] w-full rounded-[10px] border border-[#ddd7c7] bg-background px-3.5 text-[13.5px] text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-[#4f46e5] focus:ring-[3px] focus:ring-[#4f46e5]/10"
+            />
+            {autofillError && (
+              <p className="mt-2 text-[12.5px] text-[#94352a]">{autofillError}</p>
+            )}
+          </div>
+          <div className="flex items-center justify-end gap-2 px-6 py-4">
+            <button onClick={() => setShowUrlModal(false)} className="inline-flex cursor-pointer items-center rounded-[9px] border border-[#ddd7c7] bg-transparent px-4 py-2 text-[13.5px] font-medium text-secondary-foreground transition-colors hover:bg-secondary">
+              Cancel
+            </button>
+            <button
+              onClick={handleAutofill}
+              disabled={!pasteUrl.trim() || autofilling}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-[9px] bg-foreground px-4 py-2 text-[13.5px] font-medium text-background transition-colors hover:bg-[#2d2a26] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {autofilling ? (
+                <>
+                  <svg className="size-3.5 animate-spin" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 2a6 6 0 1 0 6 6" strokeLinecap="round" /></svg>
+                  Extracting…
+                </>
+              ) : (
+                <>
+                  <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M7 9l2-2a2.5 2.5 0 0 1 3.5 3.5l-2 2a2.5 2.5 0 0 1-3.5 0" />
+                    <path d="M9 7l-2 2a2.5 2.5 0 0 1-3.5-3.5l2-2a2.5 2.5 0 0 1 3.5 0" />
+                  </svg>
+                  Autofill &amp; open form
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { getCompanies, type Company } from '@/api/companies';
 import { autofillFromUrl, createJob, generateCoverLetter } from '@/api/jobs';
@@ -44,6 +44,7 @@ interface FormState {
 
 export default function NewApplication() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [form, setForm] = useState<FormState>({
     jobTitle: '',
@@ -73,7 +74,33 @@ export default function NewApplication() {
   const companyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    getCompanies().then(setCompanies).catch(() => {});
+    getCompanies().then((list) => {
+      setCompanies(list);
+      // Apply autofill data passed from Dashboard "Paste URL" flow
+      const state = location.state as { autofill?: { jobTitle?: string; companyName?: string; jobDescription?: string; jobSource?: string; salaryRange?: string }; url?: string } | null;
+      if (state?.autofill) {
+        const { autofill, url } = state;
+        setForm((f) => ({
+          ...f,
+          jobTitle: autofill.jobTitle ?? f.jobTitle,
+          jobUrl: url ?? f.jobUrl,
+          description: autofill.jobDescription ?? f.description,
+          source: autofill.jobSource ?? f.source,
+          salaryMin: autofill.salaryRange ?? f.salaryMin,
+        }));
+        if (autofill.companyName) {
+          const match = list.find((c) => c.companyName.toLowerCase() === autofill.companyName!.toLowerCase());
+          if (match) {
+            setForm((f) => ({ ...f, companyId: match.id, companySearch: match.companyName }));
+          } else {
+            setForm((f) => ({ ...f, companySearch: autofill.companyName!, companyId: null }));
+            setCompanyDropdownOpen(true);
+          }
+        }
+        // Clear state so a refresh doesn't re-apply
+        window.history.replaceState({}, '');
+      }
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
