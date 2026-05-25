@@ -1,159 +1,145 @@
 # TrackMyCareer
 
-TrackMyCareer is an open-source, single-user job application tracker for people who want one reliable place to manage their job hunt. It helps you save job listings, companies, deadlines, cover letters, interview rounds, notes, and application status without needing authentication or a team workflow.
+TrackMyCareer is an open-source, single-user job application tracker. It gives you one reliable place to manage your entire job search — companies, job listings, deadlines, cover letters, interview rounds, and notes — with no login required.
 
-The project is built as a full-stack application with a React frontend, a Spring Boot REST API, PostgreSQL persistence, Flyway migrations, and optional OpenAI-powered helpers for job autofill and cover letter drafting.
+Built as a full-stack application with a React frontend, a Spring Boot REST API, PostgreSQL persistence, and optional OpenAI-powered helpers for job autofill and cover letter drafting.
+
+---
 
 ## Features
 
 ### Dashboard
 
-- Summary cards for every pipeline status: `Wishlist`, `Applied`, `Interview`, `Offer`, and `Rejected`.
-- Upcoming application deadlines due within the next 3 days.
+- Status summary cards for every pipeline stage: Wishlist, Applied, Interview, Offer, and Rejected.
+- Upcoming deadlines due within the next 3 days.
 - Upcoming interviews scheduled within the next 7 days.
-- Quick links from dashboard items to the related job detail pages.
-- Loading and empty states for dashboard widgets.
+- Direct links from each dashboard item to the related job detail page.
 
 ### Job Application Tracking
 
-- Create, view, update, and delete job applications.
-- Store job title, company, application status, job description, cover letter, application date, deadline, job URL, job source, salary range, and creation timestamp.
-- Track the full application pipeline using the statuses:
-  - `Wishlist`
-  - `Applied`
-  - `Interview`
-  - `Offer`
-  - `Rejected`
-- Change a job's status directly from the job detail page.
-- Job detail page with tabs for overview, description, cover letter, interviews, and notes.
-- Visual pipeline stepper on the job detail page.
-- Deadline urgency labels such as today, tomorrow, overdue, or in a number of days.
-- Edit existing applications with prefilled data.
-- Paginated all-jobs page with 10 jobs per page by default.
-- Search jobs by job title or company name.
-- Filter jobs by application status.
-- Filter jobs by company from the company page.
-- Sort jobs by deadline or entry date in ascending or descending order.
-- Look up a saved job by its URL, used when scheduling interviews.
+- Create, view, edit, and delete job applications.
+- Track job title, company, status, description, cover letter, applied date, deadline, job URL, source, salary range, and creation timestamp.
+- Five pipeline statuses: **Wishlist**, **Applied**, **Interview**, **Offer**, **Rejected**.
+- Update status directly from the job detail page via a visual pipeline stepper.
+- Archive and unarchive jobs to keep your active list focused.
+- Active/Archived tab navigation on the All Jobs page.
+- Paginated job list (10 per page), searchable by job title or company name.
+- Filter by status or by company.
+- Sort by deadline or entry date, ascending or descending.
+- Deadline urgency labels: Today, Tomorrow, overdue, or in N days.
+- Job detail tabs for Overview, Description, Cover Letter, Interviews, and Notes.
+- Inline per-job notes with timestamps.
 
-### AI-Assisted Application Entry
+### AI-Assisted Entry
 
-- Paste a job posting URL to autofill job details.
-- Uses Jsoup to fetch page text from the listing.
-- Uses Spring AI with OpenAI to extract:
-  - job title
-  - company name
-  - job description
-  - salary range
-  - job source
-- Generate cover letter body paragraphs from the job title, company name, and job description.
-- AI endpoints return a clear service-unavailable response when `OPENAI_API_KEY` is not configured.
+- Paste a job posting URL to autofill job details — Jsoup fetches the page, OpenAI extracts job title, company name, description, salary range, and source.
+- Dashboard "Paste URL" shortcut opens the autofill flow directly.
+- Generate a cover letter draft from the job title, company name, and description.
+- AI endpoints return a clear `503` when `OPENAI_API_KEY` is not configured.
+
+### Rich-Text Description Editing
+
+- Markdown toolbar on the Description field (New Application and Edit Job pages).
+- Buttons: **Bold**, *Italic*, Underline, H1, H2, Bullet list.
+- Toolbar buttons wrap selected text or insert markers at the cursor.
+- Inline formats toggle off if the selection is already wrapped.
+- "Markdown supported" hint below the field.
 
 ### Company Management
 
-- Create, view, update, and delete companies.
-- Store company name and notes/about text.
-- Reusable add-company modal used from both the Companies page and New Application form.
-- Search companies on the Companies page.
+- Create, view, edit, and delete companies.
+- Store company name and free-text notes.
+- Reusable Add Company modal — available from both the Companies page and the New Application form.
+- Search and A–Z / Z–A sort on the Companies page.
 - Click a company card to view jobs filtered to that company.
-- Deterministic company avatars for visual scanning.
+- Deterministic color avatars for quick visual scanning.
 
 ### Interview Tracking
 
-- Create, view, update, and delete interview rounds.
+- Create, view, edit, and delete interview rounds.
 - Link each interview to a tracked job application.
-- Store round name, interview date, notes, job, and company context.
-- Schedule interviews from a searchable job picker.
-- Paste a job URL while scheduling an interview to auto-match an existing tracked job.
-- Quick round-name presets such as Phone Screen, Technical, System Design, Hiring Manager, Portfolio, and Onsite / Final.
-- Interviews page grouped by date.
-- Tabs for Upcoming, Past, and All interviews.
-- Search interviews by round name, company name, or job title.
-- Up-next interview callout.
-- Interview detail page with edit and delete actions.
+- Store round name, interview date, notes, and job/company context.
+- Quick round-name presets: Phone Screen, Technical, System Design, Hiring Manager, Portfolio, Onsite/Final.
+- Paste a job URL when scheduling an interview to auto-match an existing tracked job.
+- Interviews list grouped by date with Upcoming, Past, and All tabs.
+- Up-next callout for the closest scheduled interview.
+- Interview detail page with inline notes editing — add or update notes without leaving the page.
 
 ### Notes
 
-- The data model supports per-job notes with `created_at` timestamps.
-- Job detail responses include existing notes, sorted newest first.
-- The frontend currently has an optimistic note composer on job detail; persistence for new job notes is marked as a TODO in the code.
-- Interview notes are fully persisted as part of interview create/update.
+- Per-job timestamped notes stored in the database, returned newest-first on the job detail page.
+- Inline notes composer on the Job Detail page (note: API persistence is a pending TODO in `JobDetail.tsx`).
+- Interview notes are fully persisted via the interview create/update API.
+- Inline add/edit for interview notes directly on the Interview Detail page.
 
-### API and Developer Experience
-
-- REST API organized around jobs, companies, interviews, and dashboard summary data.
-- DTO-based responses; JPA entities are not exposed directly.
-- Consistent JSON error responses from a global exception handler.
-- Bean validation for request payloads.
-- CORS configured for local frontend development.
-- PostgreSQL schema managed by Flyway migrations.
-- Seed migration with sample companies, jobs, interviews, and notes.
-- Postman collection included at `TrackMyCareer.postman_collection.json`.
-- Static UI mockups included in `UI Designs/`.
+---
 
 ## Tech Stack
 
 | Layer | Technology |
-| --- | --- |
+|---|---|
 | Frontend | React 19, Vite, TypeScript |
-| Routing | React Router |
+| Routing | React Router v6 |
 | Styling | Tailwind CSS v4 |
-| UI | shadcn/ui-style components, Base UI, lucide-react |
+| UI Components | shadcn/ui-style components |
 | Backend | Spring Boot 3.5, Java 21, Maven |
 | Persistence | Spring Data JPA, Hibernate |
 | Database | PostgreSQL |
 | Migrations | Flyway |
-| AI | Spring AI + OpenAI |
+| AI | Spring AI + OpenAI (`gpt-4o-mini`) |
 | Scraping | Jsoup |
-| API Client | Native `fetch` |
+| HTTP Client | Native `fetch` (no Axios) |
+
+---
 
 ## Project Structure
 
-```text
+```
 TrackMyCareer/
-|-- frontend/                         # React + Vite frontend
-|   |-- src/api/                       # API client modules
-|   |-- src/components/                # Shared UI components
-|   `-- src/pages/                     # Route-level pages
-|-- server/                           # Spring Boot backend
-|   |-- src/main/java/.../controller/  # REST controllers
-|   |-- src/main/java/.../service/     # Business logic
-|   |-- src/main/java/.../repository/  # JPA repositories
-|   |-- src/main/java/.../model/       # JPA entities
-|   |-- src/main/java/.../dto/         # Request/response DTOs
-|   `-- src/main/resources/db/migration/
-|-- UI Designs/                       # Static HTML screen mockups
-|-- TrackMyCareer.postman_collection.json
-|-- project-scope.md
-`-- CLAUDE.md
+├── frontend/                          # React + Vite frontend
+│   └── src/
+│       ├── api/                       # API client modules (one file per resource)
+│       ├── components/                # Shared UI components
+│       └── pages/                     # Route-level page components
+├── server/                            # Spring Boot backend
+│   └── src/main/java/.../
+│       ├── controller/                # REST controllers
+│       ├── service/                   # Business logic
+│       ├── repository/                # JPA repositories
+│       ├── model/                     # JPA entities
+│       ├── dto/                       # Request/response DTOs
+│       └── resources/db/migration/    # Flyway SQL migrations
+├── UI Designs/                        # Static HTML screen mockups
+├── TrackMyCareer.postman_collection.json
+└── CLAUDE.md                          # AI assistant guidance
 ```
 
-## Prerequisites
-
-- Java 21
-- Maven, or the included Maven wrapper
-- PostgreSQL
-- Bun, or another JavaScript package manager if you adapt the commands
-- Optional: an OpenAI API key for AI autofill and cover letter generation
+---
 
 ## Getting Started
+
+### Prerequisites
+
+- Java 21
+- Maven (or use the included `./mvnw` wrapper)
+- PostgreSQL
+- [Bun](https://bun.sh) (or npm/yarn if you adapt the commands)
+- Optional: OpenAI API key for AI features
 
 ### 1. Clone the Repository
 
 ```bash
-git clone <your-fork-url>
+git clone https://github.com/learnwithiftekhar/TrackMyCareer.git
 cd TrackMyCareer
 ```
 
 ### 2. Create the PostgreSQL Database
 
-Create a local PostgreSQL database named `track_my_career`:
-
 ```sql
 CREATE DATABASE track_my_career;
 ```
 
-The default backend configuration expects:
+The default backend config expects:
 
 ```yaml
 url: jdbc:postgresql://localhost:5432/track_my_career
@@ -161,26 +147,20 @@ username: postgres
 password: "1234"
 ```
 
-You can change these values in `server/src/main/resources/application.yml` for your local environment.
+Adjust these in `server/src/main/resources/application.yml` for your environment.
 
-### 3. Configure Environment Variables
+### 3. Configure Environment Variables (optional)
 
-Create `server/.env` if you want to use the AI features:
+Create `server/.env` to enable AI features:
 
 ```bash
 OPENAI_API_KEY=sk-your-key-here
 ```
 
-Spring Boot does not load `.env` files automatically. Export the variable before starting the backend:
+Spring Boot does not load `.env` files automatically. Export before starting the server:
 
 ```bash
 export $(cat server/.env | xargs)
-```
-
-The frontend origin can be configured with:
-
-```bash
-CORS_ALLOWED_ORIGIN=http://localhost:5173
 ```
 
 ### 4. Start the Backend
@@ -190,17 +170,9 @@ cd server
 ./mvnw spring-boot:run
 ```
 
-The API runs on:
-
-```text
-http://localhost:8080
-```
-
-Flyway runs automatically on startup and applies the migrations in `server/src/main/resources/db/migration/`.
+The API runs on `http://localhost:8080`. Flyway migrations run automatically on startup.
 
 ### 5. Start the Frontend
-
-In another terminal:
 
 ```bash
 cd frontend
@@ -208,73 +180,75 @@ bun install
 bun run dev
 ```
 
-The app runs on:
+The app runs on `http://localhost:5173`.
 
-```text
-http://localhost:5173
-```
+---
 
-## Useful Commands
+## Commands
 
 ### Backend
 
 ```bash
 cd server
-./mvnw spring-boot:run
-./mvnw test
-./mvnw package
+./mvnw spring-boot:run      # start dev server (port 8080)
+./mvnw test                 # run tests
+./mvnw package              # build JAR
 ```
 
 ### Frontend
 
 ```bash
 cd frontend
-bun run dev
-bun run build
-bun run lint
-bun run preview
+bun run dev                 # start dev server (port 5173)
+bun run build               # production build
+bun run lint                # lint
 ```
+
+---
 
 ## API Reference
 
 ### Dashboard
 
 | Method | Endpoint | Description |
-| --- | --- | --- |
-| `GET` | `/api/dashboard/summary` | Status counts, upcoming deadlines, and upcoming interviews |
+|---|---|---|
+| `GET` | `/api/dashboard/summary` | Status counts, upcoming deadlines (3 days), upcoming interviews (7 days) |
 
 ### Jobs
 
 | Method | Endpoint | Description |
-| --- | --- | --- |
-| `GET` | `/api/jobs` | Paginated jobs with optional search, status, sorting, and company filters |
-| `GET` | `/api/jobs/{id}` | Get one job, including company info, interviews, and notes |
-| `POST` | `/api/jobs` | Create a job application |
-| `PUT` | `/api/jobs/{id}` | Update a job application |
-| `DELETE` | `/api/jobs/{id}` | Delete a job application |
-| `GET` | `/api/jobs/status/count` | Count jobs by application status |
-| `GET` | `/api/jobs/by-url?url=` | Find a job by saved job URL |
-| `POST` | `/api/jobs/autofill` | Extract job details from a posting URL using AI |
-| `POST` | `/api/jobs/cover-letter` | Generate a cover letter draft using AI |
+|---|---|---|
+| `GET` | `/api/jobs` | Paginated job list |
+| `GET` | `/api/jobs/{id}` | Single job with interviews and notes |
+| `POST` | `/api/jobs` | Create a job |
+| `PUT` | `/api/jobs/{id}` | Update a job |
+| `PATCH` | `/api/jobs/{id}/archive` | Archive or unarchive a job |
+| `DELETE` | `/api/jobs/{id}` | Delete a job |
+| `GET` | `/api/jobs/status/count` | Job counts by status |
+| `GET` | `/api/jobs/archived/count` | Count of archived jobs |
+| `GET` | `/api/jobs/by-url?url=` | Look up a job by its saved URL |
+| `POST` | `/api/jobs/autofill` | AI-extract job details from a posting URL |
+| `POST` | `/api/jobs/cover-letter` | AI-generate a cover letter draft |
 
-Supported `GET /api/jobs` query parameters:
+`GET /api/jobs` query parameters:
 
 | Parameter | Default | Description |
-| --- | --- | --- |
+|---|---|---|
 | `page` | `0` | Zero-based page number |
 | `size` | `10` | Page size |
-| `search` | none | Searches job title and company name |
-| `status` | none | Filters by application status |
-| `sortBy` | `deadline` | Supports `deadline` and `createdAt` |
-| `sortDir` | `asc` | Supports `asc` and `desc` |
-| `companyId` | none | Filters jobs by company |
+| `search` | — | Search by job title or company name |
+| `status` | — | Filter by application status |
+| `sortBy` | `deadline` | `deadline` or `createdAt` |
+| `sortDir` | `asc` | `asc` or `desc` |
+| `companyId` | — | Filter by company |
+| `archived` | `false` | `true` to fetch archived jobs |
 
 ### Companies
 
 | Method | Endpoint | Description |
-| --- | --- | --- |
+|---|---|---|
 | `GET` | `/api/companies` | List companies |
-| `GET` | `/api/companies/{id}` | Get one company |
+| `GET` | `/api/companies/{id}` | Get a company |
 | `POST` | `/api/companies` | Create a company |
 | `PUT` | `/api/companies/{id}` | Update a company |
 | `DELETE` | `/api/companies/{id}` | Delete a company |
@@ -282,63 +256,14 @@ Supported `GET /api/jobs` query parameters:
 ### Interviews
 
 | Method | Endpoint | Description |
-| --- | --- | --- |
-| `GET` | `/api/interviews` | List interviews |
-| `GET` | `/api/interviews?jobId={id}` | List interviews for one job |
-| `GET` | `/api/interviews/{id}` | Get one interview |
+|---|---|---|
+| `GET` | `/api/interviews` | List interviews (filter with `?jobId=`) |
+| `GET` | `/api/interviews/{id}` | Get an interview |
 | `POST` | `/api/interviews` | Create an interview |
 | `PUT` | `/api/interviews/{id}` | Update an interview |
 | `DELETE` | `/api/interviews/{id}` | Delete an interview |
 
-## Data Model
-
-### Company
-
-| Field | Description |
-| --- | --- |
-| `id` | Primary key |
-| `company_name` | Company name |
-| `about` | Notes/about text |
-
-### Job
-
-| Field | Description |
-| --- | --- |
-| `id` | Primary key |
-| `job_title` | Role title |
-| `job_description` | Full job description |
-| `cover_letter` | Saved cover letter text |
-| `applied_status` | `Wishlist`, `Applied`, `Interview`, `Offer`, or `Rejected` |
-| `applied_date` | Date applied |
-| `deadline` | Application deadline |
-| `job_url` | Original job posting URL |
-| `job_source` | Source such as LinkedIn, Indeed, Referral, or Company site |
-| `salary_range` | Free-text salary range |
-| `created_at` | Creation timestamp |
-| `company_id` | Required company relationship |
-
-### Interview
-
-| Field | Description |
-| --- | --- |
-| `id` | Primary key |
-| `round_name` | Interview round name |
-| `interview_date` | Scheduled interview date |
-| `notes` | Interview notes |
-| `job_id` | Required job relationship |
-
-### Note
-
-| Field | Description |
-| --- | --- |
-| `id` | Primary key |
-| `note` | Note body |
-| `created_at` | Creation timestamp |
-| `job_id` | Required job relationship |
-
-## Error Response Format
-
-Errors are returned as JSON:
+### Error Response Format
 
 ```json
 {
@@ -348,38 +273,78 @@ Errors are returned as JSON:
 }
 ```
 
-Validation errors return status `400` with field messages joined in the `message` field.
+Validation errors return `400` with field messages joined in the `message` field.
 
-## Open Source Notes
+---
 
-This project is designed to be friendly for contributors:
+## Data Model
 
-- Keep backend changes in the existing Controller -> Service -> Repository structure.
-- Keep frontend API calls inside `frontend/src/api/`.
-- Use DTOs for API responses instead of exposing JPA entities.
-- Add Flyway migrations for database changes.
-- Check the static mockups in `UI Designs/` before changing page layouts.
-- Keep the single-user/no-auth product assumption unless a larger auth design is introduced.
+### Company
 
-## Current Limitations and Good First Issues
+| Column | Type | Notes |
+|---|---|---|
+| `id` | BIGINT | PK |
+| `company_name` | VARCHAR(255) | Required |
+| `about` | TEXT | Optional |
 
-- Persisting newly added job notes from the frontend is not implemented yet.
-- The navbar includes a Notes link, but there is no standalone Notes route yet.
-- The All Jobs page shows an Export button, but export behavior is not wired yet.
-- Frontend API base URLs are currently hardcoded to `http://localhost:8080/api`.
+### Job
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | BIGINT | PK |
+| `job_title` | VARCHAR(255) | Required |
+| `job_description` | TEXT | Optional |
+| `cover_letter` | TEXT | Optional |
+| `applied_status` | VARCHAR(50) | `Wishlist` / `Applied` / `Interview` / `Offer` / `Rejected` |
+| `applied_date` | DATE | Optional |
+| `deadline` | DATE | Optional |
+| `job_url` | VARCHAR(2048) | Optional |
+| `job_source` | VARCHAR(100) | Optional |
+| `salary_range` | VARCHAR(100) | Optional |
+| `archived` | BOOLEAN | Default `false` |
+| `created_at` | TIMESTAMP | Set on insert |
+| `company_id` | BIGINT | FK → Company |
+
+### Interview
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | BIGINT | PK |
+| `round_name` | VARCHAR(100) | Required |
+| `interview_date` | DATE | Optional |
+| `notes` | TEXT | Optional |
+| `job_id` | BIGINT | FK → Job |
+
+### Note
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | BIGINT | PK |
+| `note` | TEXT | Required |
+| `created_at` | TIMESTAMP | Set on insert |
+| `job_id` | BIGINT | FK → Job |
+
+---
+
+## Known Limitations / Good First Issues
+
+- Job notes composed on the frontend are not yet persisted to the API (`JobDetail.tsx` has a `TODO`).
+- Frontend API base URLs are hardcoded to `http://localhost:8080/api`.
 - Automated test coverage is minimal.
-- No license file is currently included. Add one before publishing publicly as an open-source repository.
+- No license file is included yet.
+
+---
 
 ## Contributing
 
-Contributions are welcome. A good contribution flow is:
-
 1. Fork the repository.
 2. Create a feature branch.
-3. Make a focused change.
-4. Run the relevant backend and frontend checks.
-5. Open a pull request with a short description, screenshots for UI changes, and any migration notes.
+3. Make a focused change — consult `UI Designs/` before touching page layouts.
+4. Keep backend API calls in the Controller → Service → Repository structure; use DTOs, not entities.
+5. Keep frontend HTTP calls inside `frontend/src/api/`.
+6. Add a Flyway migration for any schema change.
+7. Open a pull request with a short description and screenshots for UI changes.
 
 ## License
 
-No license has been added yet. If you intend to publish this as an open-source project, add a `LICENSE` file and update this section.
+No license has been added yet. Add a `LICENSE` file before publishing as an open-source project.
