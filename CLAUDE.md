@@ -74,7 +74,7 @@ bun run lint                 # lint
 ### Backend
 Standard Spring Boot layered architecture: `Controller → Service → Repository`.
 
-- `controller/` — REST controllers: `JobController`, `CompanyController`, `DashboardController`, `HelloController`
+- `controller/` — REST controllers: `JobController`, `CompanyController`, `DashboardController`, `InterviewController`, `HelloController`
 - `service/` — business logic; `AutofillService` handles AI-powered job detail extraction and cover letter generation
 - `repository/` — Spring Data JPA repositories; custom JPQL queries for search, status counts, and date-range lookups
 - `model/` — JPA entities
@@ -87,12 +87,17 @@ CORS is configured to allow requests from `http://localhost:5173` in dev.
 | Method | Path | Description |
 |---|---|---|
 | GET | `/api/dashboard/summary` | Status counts, upcoming deadlines (3 days), upcoming interviews (7 days) |
-| GET | `/api/jobs` | Paginated jobs; query params: `page`, `size`, `search`, `status` |
+| GET | `/api/jobs` | Paginated jobs; query params: `page`, `size`, `search`, `status`, `sortBy`, `sortDir`, `companyId`, `archived` |
 | GET | `/api/jobs/status/count` | Status counts map |
+| GET | `/api/jobs/archived/count` | Count of archived jobs (returns `{ count: N }`) |
 | GET | `/api/jobs/by-url?url=` | Look up a job by its saved `job_url` field |
 | POST | `/api/jobs/autofill` | Fetch a URL with Jsoup, extract job details via OpenAI, return prefill data |
 | POST | `/api/jobs/cover-letter` | Generate a cover letter draft via OpenAI from job title, company, and description |
-| GET/POST | `/api/jobs/{id}` | Get / create / update / delete a job |
+| GET | `/api/jobs/{id}` | Get a single job with interviews and notes |
+| POST | `/api/jobs` | Create a job |
+| PUT | `/api/jobs/{id}` | Update a job |
+| PATCH | `/api/jobs/{id}/archive` | Archive or unarchive a job; body: `{ "archived": true \| false }` |
+| DELETE | `/api/jobs/{id}` | Delete a job |
 | GET/POST | `/api/companies` | List / create companies |
 | GET/PUT/DELETE | `/api/companies/{id}` | Get / update / delete a company |
 | GET/POST | `/api/interviews` | List (optionally filter by `?jobId=`) / create interviews |
@@ -125,20 +130,36 @@ All errors return a consistent JSON shape:
 Services always use `HttpStatus.NOT_FOUND` (404) for missing entities, never `BAD_REQUEST`.
 
 ### Frontend
-- `src/pages/` — one file per route: `Dashboard`, `AllJobs`, `NewApplication`, `JobDetail`, `Companies`, `Interviews`, `NewInterview`
+- `src/pages/` — one file per route: `Dashboard`, `AllJobs`, `ArchivedJobs`, `NewApplication`, `JobDetail`, `EditJob`, `Companies`, `Interviews`, `NewInterview`, `InterviewDetail`, `EditInterview`
 - `src/components/` — reusable UI components: `Navbar`, `AddCompanyModal`
 - `src/api/` — one file per backend resource (`jobs.ts`, `companies.ts`, `dashboard.ts`, `interviews.ts`); all HTTP calls live here, nowhere else
 
 Routes are defined in `App.tsx` using React Router v6. The frontend calls the backend at `http://localhost:8080/api`.
 
+| Route | Page |
+|---|---|
+| `/` | `Dashboard` |
+| `/jobs` | `AllJobs` |
+| `/jobs/new` | `NewApplication` |
+| `/jobs/archived` | `ArchivedJobs` |
+| `/jobs/:id` | `JobDetail` |
+| `/jobs/:id/edit` | `EditJob` |
+| `/companies` | `Companies` |
+| `/interviews` | `Interviews` |
+| `/interviews/new` | `NewInterview` |
+| `/interviews/:id` | `InterviewDetail` |
+| `/interviews/:id/edit` | `EditInterview` |
+
 #### Frontend API — `jobs.ts` exports
-- `getJobs(params)` — paginated job list
+- `getJobs(params)` — paginated job list; params include `page`, `size`, `search`, `status`, `sortBy`, `sortDir`, `companyId`, `archived`
 - `getJob(id)` — single job with interviews and notes
 - `getJobByUrl(url)` — look up job by its saved URL (used by New Interview autofill)
 - `autofillFromUrl(url)` — call `/api/jobs/autofill` to AI-extract job details (used by New Application)
 - `generateCoverLetter({ jobTitle, companyName?, jobDescription? })` — call `/api/jobs/cover-letter` to generate a draft (used by New Application)
 - `createJob(data)` / `updateJob(id, data)` / `deleteJob(id)`
-- `getStatusCounts()`
+- `archiveJob(id, archived)` — PATCH archive status
+- `getStatusCounts()` — all five status keys always present
+- `getArchivedCount()` — returns the count of archived jobs
 
 #### Shared Components
 - `AddCompanyModal` (`src/components/AddCompanyModal.tsx`) — modal for creating a new company; used by both `Companies.tsx` (via the page-level "Add company" button) and `NewApplication.tsx` (inline when no matching company is found in the dropdown). Props: `onClose: () => void`, `onSave: (company: Company) => void`. Calls `createCompany` internally and passes the created company to `onSave`.
@@ -180,6 +201,8 @@ Static HTML mockups live in `UI Designs/`. **Always consult the relevant file be
 | job_source | VARCHAR(100) | nullable (e.g. LinkedIn, Indeed, Referral) |
 | salary_range | VARCHAR(100) | nullable |
 | company_id | BIGINT | FK → COMPANY(id), NOT NULL |
+| archived | BOOLEAN | NOT NULL, DEFAULT FALSE |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW(), not updatable |
 
 **INTERVIEWS**
 | Column | Type | Constraints |
