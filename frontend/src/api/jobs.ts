@@ -158,3 +158,8 @@ export async function updateJob(id: number, data: JobCreateRequest): Promise<Job
   if (!res.ok) throw new Error('Failed to update job');
   return res.json();
 }
+
+export async function deleteJob(id: number): Promise<void> {
+  const res = await fetch(`${BASE}/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to delete job');
+}

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { getJob, updateJob, type JobDetail as JobDetailData, type NoteSummary } from '@/api/jobs';
+import { getJob, updateJob, deleteJob, type JobDetail as JobDetailData, type NoteSummary } from '@/api/jobs';
 
 type Status = 'Wishlist' | 'Applied' | 'Interview' | 'Offer' | 'Rejected';
 type Tab = 'Overview' | 'Description' | 'Cover letter' | 'Interviews' | 'Notes';
@@ -187,6 +187,10 @@ export default function JobDetail() {
   const [statusUpdating, setStatusUpdating] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
   const statusDropdownRef = useRef<HTMLDivElement>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [toasts, setToasts] = useState<{ id: number; type: 'success' | 'error'; message: string }[]>([]);
+  const toastCounter = useRef(0);
 
   useEffect(() => {
     if (savedBanner) {
@@ -289,9 +293,29 @@ export default function JobDetail() {
     // TODO: persist to API
   }
 
+  function showToast(type: 'success' | 'error', message: string) {
+    const tid = ++toastCounter.current;
+    setToasts(prev => [...prev, { id: tid, type, message }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== tid)), 4000);
+  }
+
+  async function confirmDelete() {
+    setShowDeleteConfirm(false);
+    setDeleting(true);
+    try {
+      await deleteJob(Number(id));
+      showToast('success', 'Application deleted successfully.');
+      setTimeout(() => navigate('/jobs', { replace: true }), 1500);
+    } catch {
+      setDeleting(false);
+      showToast('error', 'Failed to delete. Please try again.');
+    }
+  }
+
   const show = (tab: Tab) => activeTab === 'Overview' || activeTab === tab;
 
   return (
+    <>
     <main className="mx-auto max-w-[1180px] px-8 py-7 pb-20">
 
       {savedBanner && (
@@ -432,12 +456,26 @@ export default function JobDetail() {
               </div>
             )}
           </div>
-          <button className="inline-flex size-8.5 cursor-pointer items-center justify-center rounded-[9px] border border-[#ddd7c7] text-secondary-foreground transition-colors hover:bg-card hover:text-foreground">
-            <svg className="size-3.5" viewBox="0 0 16 16" fill="currentColor">
-              <circle cx="3" cy="8" r="1.3" />
-              <circle cx="8" cy="8" r="1.3" />
-              <circle cx="13" cy="8" r="1.3" />
-            </svg>
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            disabled={deleting}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-[9px] border border-[#f1cfc6] bg-transparent px-3.5 py-2 text-[13.5px] font-medium text-[#94352a] transition-colors hover:bg-[#fbeae6] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {deleting ? (
+              <>
+                <svg className="size-3.5 animate-spin" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M8 2a6 6 0 1 0 6 6" strokeLinecap="round" />
+                </svg>
+                Deleting…
+              </>
+            ) : (
+              <>
+                <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2.5 4.5h11M6 4.5V3h4v1.5M6.5 11V7M9.5 11V7M3.5 4.5l.75 8.25a.75.75 0 0 0 .75.75h6a.75.75 0 0 0 .75-.75l.75-8.25" />
+                </svg>
+                Delete
+              </>
+            )}
           </button>
         </div>
       </section>
@@ -828,5 +866,74 @@ export default function JobDetail() {
         </aside>
       </div>
     </main>
+
+      {/* Delete confirmation modal */}
+      {showDeleteConfirm && job && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+          <div className="mx-4 w-full max-w-[420px] overflow-hidden rounded-[16px] border border-border bg-card shadow-[0_20px_60px_-12px_rgba(0,0,0,.25)]">
+            <div className="px-6 pb-2 pt-6">
+              <div className="mb-4 grid size-11 place-items-center rounded-[12px] bg-[#fbeae6]">
+                <svg className="size-5 text-[#94352a]" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2.5 4.5h11M6 4.5V3h4v1.5M6.5 11V7M9.5 11V7M3.5 4.5l.75 8.25a.75.75 0 0 0 .75.75h6a.75.75 0 0 0 .75-.75l.75-8.25" />
+                </svg>
+              </div>
+              <h2 className="mb-1.5 text-[17px] font-semibold tracking-[-0.01em] text-foreground">
+                Delete this application?
+              </h2>
+              <p className="text-[13.5px] leading-[1.6] text-muted-foreground">
+                <strong className="font-medium text-secondary-foreground">{job.jobTitle}</strong> at{' '}
+                <strong className="font-medium text-secondary-foreground">{job.companyName}</strong> will be permanently removed,
+                including all interviews and notes. This cannot be undone.
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-2 px-6 py-4">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="inline-flex cursor-pointer items-center rounded-[9px] border border-[#ddd7c7] bg-transparent px-4 py-2 text-[13.5px] font-medium text-secondary-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-[9px] bg-[#94352a] px-4 py-2 text-[13.5px] font-medium text-white transition-colors hover:bg-[#7a2a21]"
+              >
+                <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2.5 4.5h11M6 4.5V3h4v1.5M6.5 11V7M9.5 11V7M3.5 4.5l.75 8.25a.75.75 0 0 0 .75.75h6a.75.75 0 0 0 .75-.75l.75-8.25" />
+                </svg>
+                Yes, delete application
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast stack */}
+      {toasts.length > 0 && (
+        <div className="fixed bottom-6 right-6 z-[60] flex flex-col gap-2">
+          {toasts.map(toast => (
+            <div
+              key={toast.id}
+              className={cn(
+                'flex items-center gap-3 rounded-[12px] border px-4 py-3 text-[13.5px] font-medium shadow-lg',
+                toast.type === 'success'
+                  ? 'border-[#b7e4c7] bg-[#eefbf3] text-[#1a6637]'
+                  : 'border-[#f1cfc6] bg-[#fbeae6] text-[#7a2f27]',
+              )}
+            >
+              {toast.type === 'success' ? (
+                <svg className="size-4 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 8l3.5 3.5L13 4" />
+                </svg>
+              ) : (
+                <svg className="size-4 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="8" cy="8" r="6" /><path d="M8 5v3.5M8 11h.01" />
+                </svg>
+              )}
+              {toast.message}
+            </div>
+          ))}
+        </div>
+      )}
+    </>
   );
 }

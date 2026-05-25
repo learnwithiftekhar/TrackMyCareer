@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { getJobs, getStatusCounts, type Job, type StatusCounts } from '@/api/jobs';
+import { getJobs, getStatusCounts, deleteJob, type Job, type StatusCounts } from '@/api/jobs';
 
 type DeadlineUrgency = 'urgent' | 'soon' | 'normal';
 type SortField = 'deadline' | 'createdAt';
@@ -116,6 +116,7 @@ function SkeletonRows() {
 }
 
 export default function AllJobs() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const companyIdParam = searchParams.get('companyId');
   const companyNameParam = searchParams.get('companyName');
@@ -132,6 +133,8 @@ export default function AllJobs() {
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<SortField>('deadline');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   // Debounce search input
   useEffect(() => {
@@ -198,6 +201,26 @@ export default function AllJobs() {
     createdAt: 'Entry Date',
   };
 
+  // Close kebab menu on outside click
+  useEffect(() => {
+    if (openMenuId === null) return;
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [openMenuId]);
+
+  async function handleDelete(id: number) {
+    if (!window.confirm('Delete this job application? This cannot be undone.')) return;
+    await deleteJob(id);
+    setJobs((prev) => prev.filter((j) => j.id !== id));
+    setTotalElements((n) => n - 1);
+    setOpenMenuId(null);
+  }
+
   const totalAll = Object.values(statusCounts).reduce((a, b) => a + b, 0);
 
   function getCount(key: string): number {
@@ -235,12 +258,6 @@ export default function AllJobs() {
               <path d="M3 4h10M5 8h6M7 12h2" />
             </svg>
             Sort: {SORT_LABELS[sortBy]} {sortDir === 'asc' ? '↑' : '↓'}
-          </Button>
-          <Button variant="outline" className="gap-[7px] rounded-[9px] px-[14px] text-[13.5px]">
-            <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M8 3v8M5 8l3 3 3-3M3 13h10" />
-            </svg>
-            Export
           </Button>
         </div>
       </section>
@@ -435,12 +452,42 @@ export default function AllJobs() {
                   </div>
 
                   {/* Actions */}
-                  <div className={cn(CELL, 'justify-center border-b border-border')}>
-                    <button className="inline-flex cursor-pointer rounded-[6px] p-[6px] text-[#b3afa3] transition-colors hover:bg-background hover:text-secondary-foreground">
+                  <div className={cn(CELL, 'relative justify-center border-b border-border')}>
+                    <button
+                      onClick={() => setOpenMenuId(openMenuId === job.id ? null : job.id)}
+                      className="inline-flex cursor-pointer rounded-[6px] p-[6px] text-[#b3afa3] transition-colors hover:bg-background hover:text-secondary-foreground"
+                    >
                       <svg className="size-3.5" viewBox="0 0 16 16" fill="currentColor">
                         <circle cx="3" cy="8" r="1.3" /><circle cx="8" cy="8" r="1.3" /><circle cx="13" cy="8" r="1.3" />
                       </svg>
                     </button>
+                    {openMenuId === job.id && (
+                      <div
+                        ref={menuRef}
+                        className="absolute right-0 top-full z-20 mt-1 min-w-[148px] overflow-hidden rounded-[10px] border border-border bg-card shadow-[0_4px_16px_rgba(0,0,0,.10)]"
+                      >
+                        <button
+                          onClick={() => { setOpenMenuId(null); navigate(`/jobs/${job.id}`); }}
+                          className="flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] text-secondary-foreground hover:bg-secondary"
+                        >
+                          <svg className="size-3.5 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M1.5 8s2.5-5 6.5-5 6.5 5 6.5 5-2.5 5-6.5 5-6.5-5-6.5-5z" />
+                            <circle cx="8" cy="8" r="1.75" />
+                          </svg>
+                          View detail
+                        </button>
+                        <div className="mx-3 h-px bg-border" />
+                        <button
+                          onClick={() => handleDelete(job.id)}
+                          className="flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] text-red-600 hover:bg-red-50"
+                        >
+                          <svg className="size-3.5 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M2.5 4.5h11M6 4.5V3h4v1.5M6.5 11V7M9.5 11V7M3.5 4.5l.75 8.25a.75.75 0 0 0 .75.75h6a.75.75 0 0 0 .75-.75l.75-8.25" />
+                          </svg>
+                          Delete
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                 </div>
