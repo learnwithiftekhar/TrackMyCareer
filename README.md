@@ -347,4 +347,4 @@ Validation errors return `400` with field messages joined in the `message` field
 
 ## License
 
-No license has been added yet. Add a `LICENSE` file before publishing as an open-source project.
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
