@@ -1,5 +1,7 @@
 # TrackMyCareer
 
+> Built by [Iftekhar Hossain](https://www.linkedin.com/in/hossain-md-iftekhar/)
+
 TrackMyCareer is an open-source, single-user job application tracker. It gives you one reliable place to manage your entire job search — companies, job listings, deadlines, cover letters, interview rounds, and notes — with no login required.
 
 Built as a full-stack application with a React frontend, a Spring Boot REST API, PostgreSQL persistence, and optional OpenAI-powered helpers for job autofill and cover letter drafting.
