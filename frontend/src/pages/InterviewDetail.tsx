@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { getInterview, deleteInterview, type Interview } from '@/api/interviews';
+import { getInterview, updateInterview, deleteInterview, type Interview } from '@/api/interviews';
 
 function companyColor(name: string): string {
   let hash = 0;
@@ -39,6 +39,12 @@ export default function InterviewDetail() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notesValue, setNotesValue] = useState('');
+  const [savingNotes, setSavingNotes] = useState(false);
+  const [notesError, setNotesError] = useState<string | null>(null);
+  const notesRef = useRef<HTMLTextAreaElement>(null);
+
   useEffect(() => {
     getInterview(Number(id))
       .then(setInterview)
@@ -54,6 +60,33 @@ export default function InterviewDetail() {
     } catch {
       setDeleting(false);
       setShowDeleteConfirm(false);
+    }
+  }
+
+  function startEditingNotes() {
+    setNotesValue(interview?.notes ?? '');
+    setNotesError(null);
+    setEditingNotes(true);
+    requestAnimationFrame(() => notesRef.current?.focus());
+  }
+
+  async function saveNotes() {
+    if (!interview) return;
+    setSavingNotes(true);
+    setNotesError(null);
+    try {
+      const updated = await updateInterview(interview.id, {
+        roundName: interview.roundName,
+        interviewDate: interview.interviewDate,
+        notes: notesValue.trim() || null,
+        jobId: interview.jobId,
+      });
+      setInterview(updated);
+      setEditingNotes(false);
+    } catch {
+      setNotesError('Failed to save. Please try again.');
+    } finally {
+      setSavingNotes(false);
     }
   }
 
@@ -210,33 +243,64 @@ export default function InterviewDetail() {
       </Card>
 
       {/* Notes card */}
-      {interview.notes && (
-        <Card className="mt-5">
-          <CardHead title="Notes" />
+      <Card className="mt-5">
+        <CardHead
+          title="Notes"
+          action={
+            !editingNotes ? (
+              <button
+                type="button"
+                onClick={startEditingNotes}
+                className="text-[12.5px] font-medium text-indigo hover:underline bg-transparent border-none cursor-pointer p-0"
+              >
+                {interview.notes ? 'Edit' : 'Add notes'}
+              </button>
+            ) : undefined
+          }
+        />
+
+        {editingNotes ? (
+          <div className="border-t border-border px-[22px] py-4">
+            <textarea
+              ref={notesRef}
+              value={notesValue}
+              onChange={e => setNotesValue(e.target.value)}
+              placeholder="Add your interview notes here…"
+              rows={6}
+              onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) saveNotes(); }}
+              className="w-full resize-y rounded-[10px] border border-border bg-secondary px-3.5 py-2.5 text-[13.5px] leading-[1.65] text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-indigo focus:bg-card focus:ring-[3px] focus:ring-indigo/8"
+            />
+            {notesError && <p className="mt-1.5 text-[12px] text-red-500">{notesError}</p>}
+            <div className="mt-3 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setEditingNotes(false)}
+                disabled={savingNotes}
+                className="cursor-pointer rounded-[8px] border border-[#ddd7c7] bg-transparent px-3 py-1.5 text-[13px] font-medium text-secondary-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={saveNotes}
+                disabled={savingNotes}
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-[8px] bg-foreground px-3 py-1.5 text-[13px] font-medium text-background transition-colors hover:bg-[#2d2a26] disabled:opacity-60"
+              >
+                {savingNotes ? 'Saving…' : 'Save notes'}
+                {!savingNotes && <span className="font-mono text-[10px] opacity-60">⌘↵</span>}
+              </button>
+            </div>
+          </div>
+        ) : interview.notes ? (
           <div className="border-t border-border px-[22px] py-5">
             <p className="whitespace-pre-wrap text-[14px] leading-[1.65] text-foreground">{interview.notes}</p>
           </div>
-        </Card>
-      )}
-
-      {!interview.notes && (
-        <Card className="mt-5">
-          <CardHead
-            title="Notes"
-            action={
-              <Link
-                to={`/interviews/${interview.id}/edit`}
-                className="text-[12.5px] font-medium text-indigo no-underline hover:underline"
-              >
-                Add notes
-              </Link>
-            }
-          />
+        ) : (
           <div className="border-t border-border px-[22px] py-8 text-center">
             <p className="text-[13.5px] text-muted-foreground">No notes yet.</p>
           </div>
-        </Card>
-      )}
+        )}
+      </Card>
 
     </main>
   );
