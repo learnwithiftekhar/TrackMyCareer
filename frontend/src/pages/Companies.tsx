@@ -272,6 +272,7 @@ export default function Companies() {
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [sortAZ, setSortAZ] = useState(true);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastCounter = useRef(0);
 
@@ -315,9 +316,12 @@ export default function Companies() {
     showToast('success', `"${updated.companyName}" updated successfully.`);
   }
 
-  const filtered = companies.filter(c =>
-    c.companyName.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filtered = companies
+    .filter(c => c.companyName.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => {
+      const cmp = a.companyName.localeCompare(b.companyName);
+      return sortAZ ? cmp : -cmp;
+    });
 
   return (
     <>
@@ -366,12 +370,15 @@ export default function Companies() {
           <div className="h-5.5 w-px bg-[#ddd7c7]" />
 
           {/* Sort button */}
-          <button className="inline-flex items-center gap-1.75 rounded-[10px] border border-[#ddd7c7] bg-card px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
+          <button
+            onClick={() => setSortAZ(v => !v)}
+            className="inline-flex items-center gap-1.75 rounded-[10px] border border-[#ddd7c7] bg-card px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          >
             <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 5l3-3 3 3M6 2v12M13 11l-3 3-3-3M10 14V2" />
             </svg>
-            A–Z
-            <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            {sortAZ ? 'A–Z' : 'Z–A'}
+            <svg className={cn('size-3.5 transition-transform', !sortAZ && 'rotate-180')} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 6l4 4 4-4" />
             </svg>
           </button>
