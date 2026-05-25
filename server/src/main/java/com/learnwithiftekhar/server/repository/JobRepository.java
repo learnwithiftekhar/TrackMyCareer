@@ -17,26 +17,29 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     Optional<Job> findByJobUrl(String jobUrl);
 
     @Query("SELECT j FROM Job j JOIN j.company c " +
-           "WHERE j.archived = false AND (LOWER(j.jobTitle) LIKE LOWER(:search) OR LOWER(c.companyName) LIKE LOWER(:search))")
-    Page<Job> searchJobs(@Param("search") String search, Pageable pageable);
+           "WHERE j.archived = :archived AND (LOWER(j.jobTitle) LIKE LOWER(:search) OR LOWER(c.companyName) LIKE LOWER(:search))")
+    Page<Job> searchJobs(@Param("search") String search, @Param("archived") boolean archived, Pageable pageable);
 
     @Query("SELECT j FROM Job j JOIN j.company c " +
-           "WHERE j.archived = false AND (LOWER(j.jobTitle) LIKE LOWER(:search) OR LOWER(c.companyName) LIKE LOWER(:search)) " +
+           "WHERE j.archived = :archived AND (LOWER(j.jobTitle) LIKE LOWER(:search) OR LOWER(c.companyName) LIKE LOWER(:search)) " +
            "AND j.appliedStatus = :status")
-    Page<Job> searchJobsByStatus(@Param("search") String search, @Param("status") AppliedStatus status, Pageable pageable);
+    Page<Job> searchJobsByStatus(@Param("search") String search, @Param("status") AppliedStatus status, @Param("archived") boolean archived, Pageable pageable);
 
     @Query("SELECT j FROM Job j JOIN j.company c " +
-           "WHERE j.archived = false AND (LOWER(j.jobTitle) LIKE LOWER(:search) OR LOWER(c.companyName) LIKE LOWER(:search)) " +
+           "WHERE j.archived = :archived AND (LOWER(j.jobTitle) LIKE LOWER(:search) OR LOWER(c.companyName) LIKE LOWER(:search)) " +
            "AND c.id = :companyId")
-    Page<Job> searchJobsByCompany(@Param("search") String search, @Param("companyId") Long companyId, Pageable pageable);
+    Page<Job> searchJobsByCompany(@Param("search") String search, @Param("companyId") Long companyId, @Param("archived") boolean archived, Pageable pageable);
 
     @Query("SELECT j FROM Job j JOIN j.company c " +
-           "WHERE j.archived = false AND (LOWER(j.jobTitle) LIKE LOWER(:search) OR LOWER(c.companyName) LIKE LOWER(:search)) " +
+           "WHERE j.archived = :archived AND (LOWER(j.jobTitle) LIKE LOWER(:search) OR LOWER(c.companyName) LIKE LOWER(:search)) " +
            "AND j.appliedStatus = :status AND c.id = :companyId")
-    Page<Job> searchJobsByStatusAndCompany(@Param("search") String search, @Param("status") AppliedStatus status, @Param("companyId") Long companyId, Pageable pageable);
+    Page<Job> searchJobsByStatusAndCompany(@Param("search") String search, @Param("status") AppliedStatus status, @Param("companyId") Long companyId, @Param("archived") boolean archived, Pageable pageable);
 
     @Query("SELECT j.appliedStatus, COUNT(j) FROM Job j WHERE j.archived = false GROUP BY j.appliedStatus")
     List<Object[]> countByStatus();
+
+    @Query("SELECT COUNT(j) FROM Job j WHERE j.archived = true")
+    long countArchived();
 
     @Query("SELECT j FROM Job j JOIN FETCH j.company WHERE j.archived = false AND j.deadline BETWEEN :start AND :end ORDER BY j.deadline ASC")
     List<Job> findUpcomingDeadlines(@Param("start") LocalDate start, @Param("end") LocalDate end);

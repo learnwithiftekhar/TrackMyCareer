@@ -54,6 +54,7 @@ export async function getJobs(params: {
   sortBy?: string;
   sortDir?: 'asc' | 'desc';
   companyId?: number;
+  archived?: boolean;
 }): Promise<JobPage> {
   const url = new URL(BASE);
   if (params.page != null) url.searchParams.set('page', String(params.page));
@@ -63,6 +64,7 @@ export async function getJobs(params: {
   if (params.sortBy) url.searchParams.set('sortBy', params.sortBy);
   if (params.sortDir) url.searchParams.set('sortDir', params.sortDir);
   if (params.companyId != null) url.searchParams.set('companyId', String(params.companyId));
+  if (params.archived) url.searchParams.set('archived', 'true');
   const res = await fetch(url.toString());
   if (!res.ok) throw new Error('Failed to fetch jobs');
   return res.json();
@@ -72,6 +74,13 @@ export async function getStatusCounts(): Promise<StatusCounts> {
   const res = await fetch(`${BASE}/status/count`);
   if (!res.ok) throw new Error('Failed to fetch status counts');
   return res.json();
+}
+
+export async function getArchivedCount(): Promise<number> {
+  const res = await fetch(`${BASE}/archived/count`);
+  if (!res.ok) throw new Error('Failed to fetch archived count');
+  const data = await res.json();
+  return data.count;
 }
 
 export interface JobCreateRequest {

@@ -35,13 +35,19 @@ public class JobController {
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "deadline") String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir,
-            @RequestParam(required = false) Long companyId) {
-        return jobService.getJobs(page, size, search, status, sortBy, sortDir, companyId);
+            @RequestParam(required = false) Long companyId,
+            @RequestParam(defaultValue = "false") boolean archived) {
+        return jobService.getJobs(page, size, search, status, sortBy, sortDir, companyId, archived);
     }
 
     @GetMapping("/status/count")
     public Map<String, Long> getStatusCounts() {
         return jobService.getStatusCounts();
+    }
+
+    @GetMapping("/archived/count")
+    public Map<String, Long> getArchivedCount() {
+        return Map.of("count", jobService.getArchivedCount());
     }
 
     @PostMapping("/autofill")

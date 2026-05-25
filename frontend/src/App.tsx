@@ -10,6 +10,7 @@ import Interviews from './pages/Interviews';
 import NewInterview from './pages/NewInterview';
 import EditInterview from './pages/EditInterview';
 import InterviewDetail from './pages/InterviewDetail';
+import ArchivedJobs from './pages/ArchivedJobs';
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/jobs" element={<AllJobs />} />
         <Route path="/jobs/new" element={<NewApplication />} />
+        <Route path="/jobs/archived" element={<ArchivedJobs />} />
         <Route path="/jobs/:id" element={<JobDetail />} />
         <Route path="/jobs/:id/edit" element={<EditJob />} />
         <Route path="/companies" element={<Companies />} />
