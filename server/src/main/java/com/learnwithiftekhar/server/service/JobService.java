@@ -118,6 +118,12 @@ public class JobService {
         return toResponse(job);
     }
 
+    public JobResponse archiveJob(Long id, boolean archived) {
+        Job job = findById(id);
+        job.setArchived(archived);
+        return toResponse(jobRepository.save(job));
+    }
+
     public void deleteJob(Long id) {
         if (!jobRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found");
@@ -163,6 +169,7 @@ public class JobService {
         response.setJobSource(job.getJobSource());
         response.setSalaryRange(job.getSalaryRange());
         response.setCreatedAt(job.getCreatedAt());
+        response.setArchived(job.isArchived());
         return response;
     }
 }

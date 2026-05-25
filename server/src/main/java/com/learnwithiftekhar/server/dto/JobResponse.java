@@ -8,6 +8,7 @@ public class JobResponse {
 
     private Long id;
     private String jobTitle;
+    private boolean archived;
     private Long companyId;
     private String companyName;
     private String companyAbout;
@@ -25,6 +26,9 @@ public class JobResponse {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public boolean isArchived() { return archived; }
+    public void setArchived(boolean archived) { this.archived = archived; }
 
     public String getJobTitle() { return jobTitle; }
     public void setJobTitle(String jobTitle) { this.jobTitle = jobTitle; }

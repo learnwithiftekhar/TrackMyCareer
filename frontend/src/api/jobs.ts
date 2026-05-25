@@ -14,6 +14,7 @@ export interface Job {
   jobSource: string | null;
   salaryRange: string | null;
   createdAt: string;
+  archived: boolean;
 }
 
 export interface InterviewSummary {
@@ -162,4 +163,14 @@ export async function updateJob(id: number, data: JobCreateRequest): Promise<Job
 export async function deleteJob(id: number): Promise<void> {
   const res = await fetch(`${BASE}/${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error('Failed to delete job');
+}
+
+export async function archiveJob(id: number, archived: boolean): Promise<Job> {
+  const res = await fetch(`${BASE}/${id}/archive`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ archived }),
+  });
+  if (!res.ok) throw new Error('Failed to update archive status');
+  return res.json();
 }

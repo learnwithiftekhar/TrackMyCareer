@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { getJob, updateJob, deleteJob, type JobDetail as JobDetailData, type NoteSummary } from '@/api/jobs';
+import { getJob, updateJob, deleteJob, archiveJob, type JobDetail as JobDetailData, type NoteSummary } from '@/api/jobs';
 
 type Status = 'Wishlist' | 'Applied' | 'Interview' | 'Offer' | 'Rejected';
 type Tab = 'Overview' | 'Description' | 'Cover letter' | 'Interviews' | 'Notes';
@@ -189,6 +189,7 @@ export default function JobDetail() {
   const statusDropdownRef = useRef<HTMLDivElement>(null);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [archiving, setArchiving] = useState(false);
   const [toasts, setToasts] = useState<{ id: number; type: 'success' | 'error'; message: string }[]>([]);
   const toastCounter = useRef(0);
 
@@ -299,6 +300,21 @@ export default function JobDetail() {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== tid)), 4000);
   }
 
+  async function handleArchive() {
+    if (!job) return;
+    const newArchived = !job.archived;
+    setArchiving(true);
+    try {
+      const updated = await archiveJob(Number(id), newArchived);
+      setJob((prev) => prev ? { ...prev, archived: updated.archived } : prev);
+      showToast('success', newArchived ? 'Application archived.' : 'Application restored to active.');
+    } catch {
+      showToast('error', 'Failed to update archive status. Please try again.');
+    } finally {
+      setArchiving(false);
+    }
+  }
+
   async function confirmDelete() {
     setShowDeleteConfirm(false);
     setDeleting(true);
@@ -317,6 +333,16 @@ export default function JobDetail() {
   return (
     <>
     <main className="mx-auto max-w-[1180px] px-8 py-7 pb-20">
+
+      {job.archived && (
+        <div className="mb-5 flex items-center gap-2.5 rounded-[10px] border border-[#ddd7c7] bg-secondary px-4 py-2.5 text-[13.5px] font-medium text-muted-foreground">
+          <svg className="size-4 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2 5h12v1.5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5zM6 8.5v4M10 8.5v4" />
+            <path d="M1 5l1.5-2.5h11L15 5" />
+          </svg>
+          This application is archived and hidden from main views.
+        </div>
+      )}
 
       {savedBanner && (
         <div className="mb-5 flex items-center gap-2.5 rounded-[10px] border border-[#b7dfca] bg-[#edf7f2] px-4 py-2.5 text-[13.5px] font-medium text-[#1e6b46]">
@@ -852,14 +878,46 @@ export default function JobDetail() {
           <Card>
             <div className="flex items-center justify-between gap-3 px-[22px] py-4">
               <div>
-                <div className="text-[13px] font-medium text-foreground">Archive this application</div>
-                <div className="mt-0.5 text-[12px] text-muted-foreground">Hide from main views without deleting.</div>
+                <div className="text-[13px] font-medium text-foreground">
+                  {job.archived ? 'Archived application' : 'Archive this application'}
+                </div>
+                <div className="mt-0.5 text-[12px] text-muted-foreground">
+                  {job.archived
+                    ? 'Restore to make it visible in main views again.'
+                    : 'Hide from main views without deleting.'}
+                </div>
               </div>
               <button
                 type="button"
-                className="inline-flex cursor-pointer items-center rounded-[9px] border border-[#ddd7c7] bg-transparent px-2.5 py-1.5 text-[12.5px] font-medium text-secondary-foreground transition-colors hover:bg-card hover:text-foreground"
+                onClick={handleArchive}
+                disabled={archiving}
+                className={cn(
+                  'inline-flex cursor-pointer items-center gap-1.5 rounded-[9px] border px-2.5 py-1.5 text-[12.5px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60',
+                  job.archived
+                    ? 'border-[#b7e4c7] bg-[#eefbf3] text-[#1a6637] hover:bg-[#d8f5e7]'
+                    : 'border-[#ddd7c7] bg-transparent text-secondary-foreground hover:bg-card hover:text-foreground',
+                )}
               >
-                Archive
+                {archiving ? (
+                  <svg className="size-3.5 animate-spin" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M8 2a6 6 0 1 0 6 6" strokeLinecap="round" />
+                  </svg>
+                ) : job.archived ? (
+                  <>
+                    <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M8 12V4M5 7l3-3 3 3" />
+                    </svg>
+                    Restore
+                  </>
+                ) : (
+                  <>
+                    <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M2 5h12v1.5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5zM6 8.5v4M10 8.5v4" />
+                      <path d="M1 5l1.5-2.5h11L15 5" />
+                    </svg>
+                    Archive
+                  </>
+                )}
               </button>
             </div>
           </Card>

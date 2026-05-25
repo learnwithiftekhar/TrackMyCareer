@@ -43,6 +43,9 @@ public class Job {
     @Column(name = "salary_range", length = 100)
     private String salaryRange;
 
+    @Column(name = "archived", nullable = false)
+    private boolean archived = false;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -88,6 +91,9 @@ public class Job {
 
     public String getSalaryRange() { return salaryRange; }
     public void setSalaryRange(String salaryRange) { this.salaryRange = salaryRange; }
+
+    public boolean isArchived() { return archived; }
+    public void setArchived(boolean archived) { this.archived = archived; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
 

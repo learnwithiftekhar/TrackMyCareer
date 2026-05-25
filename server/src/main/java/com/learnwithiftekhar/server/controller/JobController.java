@@ -74,6 +74,12 @@ public class JobController {
         return jobService.updateJob(id, request);
     }
 
+    @PatchMapping("/{id}/archive")
+    public JobResponse archiveJob(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
+        boolean archived = Boolean.TRUE.equals(body.get("archived"));
+        return jobService.archiveJob(id, archived);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteJob(@PathVariable Long id) {
         jobService.deleteJob(id);
