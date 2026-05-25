@@ -159,22 +159,29 @@ export default function ArchivedJobs() {
       {/* Page header */}
       <section className="mb-7 flex items-end justify-between gap-6">
         <div>
-          <div className="mb-2 flex items-center gap-2 text-[13px] text-muted-foreground">
-            <Link to="/jobs" className="text-muted-foreground no-underline transition-colors hover:text-secondary-foreground">
-              All Jobs
-            </Link>
-            <svg className="size-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 4l4 4-4 4" />
-            </svg>
-            <span className="text-secondary-foreground">Archived</span>
-          </div>
           <h1 className="mb-1 text-[30px] font-semibold leading-none tracking-[-0.02em] text-foreground">
-            Archived Jobs
+            All Jobs
           </h1>
           <p className="text-[14px] text-muted-foreground">
             <strong className="font-medium text-secondary-foreground">{totalElements}</strong> archived applications
             &nbsp;·&nbsp;Sorted by {SORT_LABELS[sortBy]}, {sortDir === 'asc' ? 'oldest first' : 'newest first'}
           </p>
+          <div className="mt-3 flex items-center gap-1">
+            <Link
+              to="/jobs"
+              className="inline-flex items-center gap-1.5 rounded-[8px] px-3 py-1.5 text-[13px] font-medium text-muted-foreground no-underline transition-colors hover:bg-secondary hover:text-secondary-foreground"
+            >
+              Active
+            </Link>
+            <span className="inline-flex items-center gap-1.5 rounded-[8px] bg-foreground px-3 py-1.5 text-[13px] font-medium text-background">
+              <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2 5h12v1.5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5zM6 8.5v4M10 8.5v4" />
+                <path d="M1 5l1.5-2.5h11L15 5" />
+              </svg>
+              Archived
+              <span className="rounded-[5px] bg-white/15 px-1.5 py-px font-mono text-[11px]">{totalElements}</span>
+            </span>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => handleSort(sortBy)} className="gap-[7px] rounded-[9px] px-[14px] text-[13.5px]">

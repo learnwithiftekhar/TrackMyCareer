@@ -253,6 +253,25 @@ export default function AllJobs() {
             <strong className="font-medium text-secondary-foreground">{totalElements}</strong> applications tracked
             &nbsp;·&nbsp;Sorted by {SORT_LABELS[sortBy]}, {sortDir === 'asc' ? 'oldest first' : 'newest first'}
           </p>
+          <div className="mt-3 flex items-center gap-1">
+            <span className="inline-flex items-center gap-1.5 rounded-[8px] bg-foreground px-3 py-1.5 text-[13px] font-medium text-background">
+              Active
+              <span className="rounded-[5px] bg-white/15 px-1.5 py-px font-mono text-[11px]">{totalAll}</span>
+            </span>
+            <Link
+              to="/jobs/archived"
+              className="inline-flex items-center gap-1.5 rounded-[8px] px-3 py-1.5 text-[13px] font-medium text-muted-foreground no-underline transition-colors hover:bg-secondary hover:text-secondary-foreground"
+            >
+              <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2 5h12v1.5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5zM6 8.5v4M10 8.5v4" />
+                <path d="M1 5l1.5-2.5h11L15 5" />
+              </svg>
+              Archived
+              {archivedCount > 0 && (
+                <span className="rounded-[5px] bg-secondary px-1.5 py-px font-mono text-[11px] text-muted-foreground">{archivedCount}</span>
+              )}
+            </Link>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => handleSort(sortBy)} className="gap-[7px] rounded-[9px] px-[14px] text-[13.5px]">
@@ -551,22 +570,6 @@ export default function AllJobs() {
             </button>
           </div>
         </section>
-      )}
-
-      {/* Archived link */}
-      {archivedCount > 0 && (
-        <div className="mt-6 flex justify-center">
-          <Link
-            to="/jobs/archived"
-            className="inline-flex items-center gap-2 rounded-[9px] border border-[#ddd7c7] bg-card px-4 py-2 text-[13px] text-muted-foreground no-underline transition-colors hover:border-[#c0bbb0] hover:text-secondary-foreground"
-          >
-            <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M2 5h12v1.5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5zM6 8.5v4M10 8.5v4" />
-              <path d="M1 5l1.5-2.5h11L15 5" />
-            </svg>
-            View {archivedCount} archived {archivedCount === 1 ? 'application' : 'applications'}
-          </Link>
-        </div>
       )}
 
     </main>
