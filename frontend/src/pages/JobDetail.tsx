@@ -335,12 +335,18 @@ export default function JobDetail() {
     <main className="mx-auto max-w-[1180px] px-8 py-7 pb-20">
 
       {job.archived && (
-        <div className="mb-5 flex items-center gap-2.5 rounded-[10px] border border-[#ddd7c7] bg-secondary px-4 py-2.5 text-[13.5px] font-medium text-muted-foreground">
-          <svg className="size-4 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M2 5h12v1.5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5zM6 8.5v4M10 8.5v4" />
-            <path d="M1 5l1.5-2.5h11L15 5" />
-          </svg>
-          This application is archived and hidden from main views.
+        <div className="mb-5 flex items-center gap-3 rounded-[12px] border border-[#f6c94e] bg-[#fffbeb] px-4 py-3 text-[13.5px] font-medium text-[#854d0e]">
+          <div className="grid size-8 shrink-0 place-items-center rounded-[8px] bg-[#fef08a]">
+            <svg className="size-4 text-[#854d0e]" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 5h12v1.5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5zM6 8.5v4M10 8.5v4" />
+              <path d="M1 5l1.5-2.5h11L15 5" />
+            </svg>
+          </div>
+          <div>
+            <span className="font-semibold">Archived</span>
+            <span className="mx-1.5 text-[#a16207]/60">·</span>
+            This application is hidden from All Jobs and the dashboard.
+          </div>
         </div>
       )}
 
@@ -866,7 +872,7 @@ export default function JobDetail() {
             )}
             <div className="px-[22px] pb-4">
               <Link
-                to={`/companies`}
+                to={`/jobs?companyId=${job.companyId}&companyName=${encodeURIComponent(job.companyName)}`}
                 className="inline-flex cursor-pointer items-center gap-1 rounded-[6px] px-0 py-1 text-[12.5px] text-muted-foreground no-underline transition-colors hover:text-secondary-foreground"
               >
                 View all jobs at {job.companyName} →
